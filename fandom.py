@@ -165,31 +165,33 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
     req = requests.get(page_url)
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
-    dialoguePart = document.find('div', {'class': 'dialogue'})
-    if dialoguePart is None:
+    dialogueParts = document.find_all('div', {'class': 'dialogue'})
+    
+    if dialogueParts is None:
         common.log(f"unexpected dialogue part: {page_url}")
         return collection
 
-    ddLabels = dialoguePart.find_all(name='dd')
-    for i in ddLabels:
-        bLabel = i.find('b')
-        if bLabel is None:
-            # useless dialogue, skip
-            continue
-
-        char = bLabel.text[0:-1]
-
-        if char in target_va:
-            if i.find('span') is None:
-                common.log(f"No subtitle found for character: {char} in text: {i.text}")
+    for dialoguePart in dialogueParts:
+        ddLabels = dialoguePart.find_all(name='dd')
+        for i in ddLabels:
+            bLabel = i.find('b')
+            if bLabel is None:
+                # useless dialogue, skip
                 continue
-            # get text after `char:`
-            text = i.text
-            text = text[text.find(f'{char}: ') + len(f'{char}: '):]
-            common.log(f"Found character {char} subtitle: {text}")
-            if collection.get(char) is None:
-                collection[char] = []
-            collection[char].append(text)
+
+            char = bLabel.text[0:-1]
+
+            if char in target_va:
+                if i.find('span') is None:
+                    common.log(f"No subtitle found for character: {char} in text: {i.text}")
+                    continue
+                # get text after `char:`
+                text = i.text
+                text = text[text.find(f'{char}: ') + len(f'{char}: '):]
+                common.log(f"Found character {char} subtitle: {text}")
+                if collection.get(char) is None:
+                    collection[char] = []
+                collection[char].append(text)
 
     return collection
 

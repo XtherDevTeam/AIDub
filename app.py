@@ -3,6 +3,7 @@ from multiprocessing import cpu_count
 
 import common
 import config
+import detect_and_play
 import dub
 import fandom
 import finetune
@@ -62,6 +63,7 @@ if __name__ == '__main__':
     parser.add_argument('--finetune', action='store_true', help='Finetune the model')
     parser.add_argument('--inference-server', action='store_true', help='Start fish-speech inference server for dubbing')
     parser.add_argument('--dub-all', action='store_true', help='Dub all the subtitles in the manifest file')
+    parser.add_argument('--detect-and-play', action='store_true', help='Run the wrapper script to detect and play the dubbed audio')
     args = parser.parse_args()
 
     if args.voice:
@@ -74,5 +76,7 @@ if __name__ == '__main__':
         dub.dub_all()
     elif args.inference_server:
         dub.run_gpt_sovits_api_server()
+    elif args.detect_and_play:
+        detect_and_play.run_dnp()
     else:
         parser.print_help()

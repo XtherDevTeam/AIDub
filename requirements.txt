@@ -1,3 +1,9 @@
 bs4
 requests
 clint
+pynput
+pyscreenshot
+fuzzywuzzy
+nltk
+pydub
+simpleaudio

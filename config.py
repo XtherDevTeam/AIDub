@@ -35,6 +35,7 @@ dataset_manifest_file_dest = f"{save_dest_root}/dataset_manifest.json"
 dub_manifest_dest = f"{save_dest_root}/dub_manifest.json"
 dub_result_dest = f"{save_dest_root}/dub_result"
 dub_result_manifest_dest = f"{save_dest_root}/dub_result_manifest.json"
+screenshot_dest = f"{save_dest_root}/screenshot.png"
 
 # fish speech configuration
 fish_speech_module_path = "thirdparty/fish"
