@@ -7,3 +7,4 @@ fuzzywuzzy
 nltk
 pydub
 simpleaudio
+pylcs

@@ -1,3 +1,5 @@
+import re
+import pylcs
 import time
 import fuzzywuzzy.fuzz
 import mss.screenshot
@@ -41,6 +43,9 @@ def extract_text_from_ocr_result(ocr_result):
 
     extracted_texts = []
     for page in ocr_result:  # Iterate through pages (if multiple)
+        if page is None:  # Skip empty pages
+            continue
+        
         for item in page:
              extracted_texts.append(item[1][0])
 
@@ -53,18 +58,15 @@ def extract_text():
 played = {}
 
 def check_similarity(text1, ori_text):
-    hits, misses = (0, 0)
+    # replace all non-alphanumeric characters with space
+    text1 = re.sub(r'[^a-zA-Z0-9]+','', text1)
+    text1 = text1.lower()
+    ori_text = re.sub(r'[^a-zA-Z0-9]+','', ori_text)
+    ori_text = ori_text.lower()
+    # get the longest common substring length
+    pylcs_result = pylcs.lcs_sequence_length(text1, ori_text)
+    return (pylcs_result / max(len(text1), len(ori_text)), len(ori_text))
     
-    text1 = text1.lower().replace(" ", "").replace("\n", "")
-    words = nltk.word_tokenize(ori_text.lower())
-    print(words, text1)
-    for i in words:
-        if i in text1:
-            hits += 1
-        else:
-            misses += 1
-    
-    return hits / (hits + misses)
 
 
 def play(dest: str):
@@ -83,15 +85,16 @@ def match_once():
     for char in collections:
         if char in text:
             # there is a character name, means potential character subtitle, do full check
-            for subtitle_label in collections[char]:
-                ori_text = collections[char][subtitle_label]['text']
-                similarities = [(check_similarity(text, ori_text), collections[char][subtitle_label]['dest']) for i in collections[char][subtitle_label]]
-                similarities.sort(reverse=True, key=lambda x: x[0])
-                if similarities[0][0] > 0.5 or played.get(ori_text, True):
-                    common.log(f"Found subtitle {subtitle_label} for character {char}, similarity {similarities[0][0]}, playing {similarities[0][1]}")
-                    play(similarities[0][1])
-                    played[ori_text] = False
-                    return True
+            similarities = [(check_similarity(text, collections[char][i]['text']), collections[char][i]['dest'], collections[char][i]['text']) for i in collections[char]]
+            
+            ori_text = similarities[0][2]
+            similarities.sort(reverse=True, key=lambda x: x[0])
+            print(similarities)
+            if (similarities[0][0][0] > 0.5 and similarities[0][0][1] > 30) or (similarities[0][0][0] > 0.7 and similarities[0][0][1] <= 30) or played.get(ori_text, True):
+                common.log(f"Found subtitle {ori_text} for character {char}, similarity {similarities[0][0][0]}, playing {similarities[0][1]}")
+                play(similarities[0][1])
+                played[ori_text] = False
+                return True
     common.log(f"No subtitle found for text, skipping")
     return False
             
@@ -99,7 +102,7 @@ def match_once():
 def daemon_wrapper():
     while True:
         match_once()
-        time.sleep(0.5)
+        time.sleep(0.2)
         
 
 def run_dnp():
