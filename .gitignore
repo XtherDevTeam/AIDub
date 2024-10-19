@@ -1,0 +1,8 @@
+saves
+.idea
+.vscode
+.gradle
+__pycache__
+.env
+.venv
+*.7z
