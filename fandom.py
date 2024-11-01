@@ -1,4 +1,5 @@
 # fandom.com operations related
+import time
 import urllib
 
 import bs4
@@ -44,7 +45,8 @@ def fetch_quest_entries_from_tribe_quest_page(page_url: str) -> list[str]:
     list[str]: List of quest entries present in the tribe quest.
     """
     collection = []
-    req = requests.get(page_url)
+    req = common.request_retry_wrapper(lambda: requests.get(page_url))
+    
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     # find all <ul> tags
@@ -90,7 +92,8 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
 
     collection = {}
 
-    req = requests.get(page_url)
+    req: requests.Response = common.request_retry_wrapper(lambda: requests.get(page_url))
+    
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     dialogueParts = document.find_all('div', {'class': 'dialogue'})
@@ -183,8 +186,17 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
 
             if char in target_va:
                 if i.find('span') is None:
-                    common.log(f"No subtitle found for character: {char} in text: {i.text}")
+                    common.log(f"No subtitle found for character: {char} in text: {i.text}, trying fallback method")
+                    if i.text.strip().startswith(f'{char}: '):
+                        text = i.text.strip()[len(f'{char}: '):]
+                        common.log(f"Found character {char} subtitle: {text}")
+                        if collection.get(char) is None:
+                            collection[char] = []
+                        collection[char].append(text)
+                    else:
+                        common.log(f"No subtitle found for character: {char} in text: {i.text}")
                     continue
+
                 # get text after `char:`
                 text = i.text
                 text = text[text.find(f'{char}: ') + len(f'{char}: '):]

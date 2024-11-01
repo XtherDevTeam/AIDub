@@ -1,4 +1,7 @@
+import pydub
 import re
+import pydub.playback
+import pydub.silence
 import pylcs
 import time
 import fuzzywuzzy.fuzz
@@ -21,6 +24,25 @@ import nltk
 ocr = PaddleOCR(use_angle_cls=True, lang="en")
 
 collections = json.loads(pathlib.Path(config.dub_result_manifest_dest).read_text())
+
+def trim_leading_silence(sound: pydub.AudioSegment) -> pydub.AudioSegment:
+    """
+    从音频段的开头修剪静音。
+
+    Args:
+        sound: AudioSegment 对象
+
+    Returns:
+        修剪后的 AudioSegment 对象，或原始对象（如果未检测到静音）。
+    """
+    silence_ranges = pydub.silence.detect_silence(sound, min_silence_len=100, silence_thresh=sound.dBFS - 16)  # 可调整参数
+
+    if silence_ranges:
+        first_nonsilent_start = silence_ranges[0][1]
+        trimmed_sound = sound[first_nonsilent_start:]
+        return trimmed_sound
+    else:
+        return sound
 
 def get_bottom_half_screenshot():
     pyscreenshot.grab().save(config.screenshot_dest)
@@ -64,12 +86,12 @@ def check_similarity(text1, ori_text, char):
     ori_text = re.sub(r'[^a-zA-Z0-9]+','', ori_text)
     ori_text = ori_text.lower()
     # get the longest common substring length
-    pylcs_result = pylcs.lcs_sequence_length(text1, ori_text)
+    pylcs_result = pylcs.lcs_string_length(text1, ori_text)
     similarity = fuzzywuzzy.fuzz.ratio(text1, ori_text) / 100
     
     if pylcs_result > 10:
         return (pylcs_result + similarity, len(ori_text), True, pylcs_result, text1, ori_text)
-    if abs(pylcs_result - len(ori_text)) < 10:
+    if abs(pylcs_result - max(len(text1), len(ori_text))) < 10:
         return (pylcs_result + similarity, True, pylcs_result, text1, ori_text)
     
     return (0, len(ori_text), False, 0, text1, ori_text) # no similarity, return 0
@@ -77,12 +99,10 @@ def check_similarity(text1, ori_text, char):
 
 
 def play(dest: str):
-    from pydub import AudioSegment
-    from pydub.playback import play
-
     #convert audio to datasegment
-    sound = AudioSegment.from_file(dest, "aac") 
-    play(sound)  #play sound
+    sound = pydub.AudioSegment.from_file(dest, "aac")
+    sound = trim_leading_silence(sound)  # remove leading silence
+    pydub.playback.play(sound)  #play sound
 
 
 def match_once():
@@ -111,7 +131,7 @@ def match_once():
 def daemon_wrapper():
     while True:
         match_once()
-        time.sleep(0.1)
+        time.sleep(0.01)
         
 
 def run_dnp():

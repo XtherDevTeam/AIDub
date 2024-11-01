@@ -1,3 +1,4 @@
+import emotion
 import GPTSoVits
 import common
 import config
@@ -17,15 +18,23 @@ def pick_random(collection: dict[str, list[str]], char: str) -> tuple[str, str]:
     import random
     prompt_voice_lbl = random.sample(prompt_voice_lbls, 1)[0]
     prompt_voice = collection[char][prompt_voice_lbl]
+    while common.check_if_audio_exceeds_10s(prompt_voice['dest']):
+        common.log(f"Audio exceeds 10s, picking another voice for {char}")
+        prompt_voice_lbl, prompt_voice = (random.sample(prompt_voice_lbls, 1)[0], collection[char][prompt_voice_lbl])
+        
     return prompt_voice_lbl, prompt_voice
 
-def check_if_audio_exceeds_10s(audio_path: str) -> bool:
-    import soundfile as sf
-    audio, sr = sf.read(audio_path)
-    common.log(f"Audio length: {len(audio) / sr}s")
-    return (len(audio) / sr) > 9 or (len(audio) / sr) < 4
 
-def generate_prompt_from_voice(char: str) -> tuple[str, str]:
+def pick_by_emotion(collection: dict[str, list[str]], char: str, text: str) -> tuple[str, str]:
+    d = emotion.choose_a_voice_by_text(char, text)
+    if d is None:
+        common.log(f"No voice found for {char} with text {text}")
+        return None, None
+    
+    return d['hash_id'], collection[char][d['hash_id']]
+
+
+def generate_prompt_from_voice(char: str, text: str) -> tuple[str, str]:
     """
     Generates a prompt from a voice file and returns the label and text of the prompt.
 
@@ -37,9 +46,10 @@ def generate_prompt_from_voice(char: str) -> tuple[str, str]:
     """
     # select prompt voice
     collection = json.loads(pathlib.Path(config.dataset_manifest_file_dest).read_text())
-    _, voice = pick_random(collection, char)
-    while check_if_audio_exceeds_10s(voice['dest']):
-        common.log(f"Audio exceeds 10s, picking another voice for {char}")
+    
+    _, voice = pick_by_emotion(collection, char, text)
+    if voice is None:
+        common.log(f"No voice found for {char} with text {text}, fallback to random voice")
         _, voice = pick_random(collection, char)
     
     return voice['text'], voice['dest']
@@ -51,7 +61,7 @@ def dub_one(text: str, char: str):
     if os.path.exists(dest_path):
         common.log(f"Dub already exists for {text} for {char}")
         return label, dest_path
-    pTexts, pDests = generate_prompt_from_voice(char)
+    pTexts, pDests = generate_prompt_from_voice(char, text)
     
     resp = GPTSoVitsAPI.tts(pDests, pTexts, text, 'en', 'en')
     
@@ -84,6 +94,7 @@ def get_tts_models(char: str):
     
 def dub_all():
     make_dirs()
+    emotion.load_analysis_file()
     collection = json.loads(pathlib.Path(config.dub_manifest_dest).read_text())
     dub_result_manifest = {}
     for char in collection:

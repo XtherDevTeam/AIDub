@@ -1,3 +1,6 @@
+import pathlib
+import json
+import config
 import hashlib
 import multiprocessing
 import time
@@ -20,6 +23,8 @@ def md5(s: str) -> str:
 
 
 processes = []
+
+cache = {}
 
 
 def cleanup_processes():
@@ -71,3 +76,45 @@ def run_in_parallel(func, args_list, max_workers=32):
 
     worker = get_free_worker(func, args_list, max_workers)
     processes[worker].start()
+
+
+def check_if_audio_exceeds_10s(audio_path: str) -> bool:
+    import soundfile as sf
+    audio, sr = sf.read(audio_path)
+    log(f"Audio length: {len(audio) / sr}s")
+    return (len(audio) / sr) > 9 or (len(audio) / sr) < 4
+
+
+def request_retry_wrapper(fetcher: typing.Callable, max_retries: int = 64):
+    for _ in range(max_retries):
+        try:
+            req = fetcher()
+            return req
+        except Exception as e:
+            import random
+            log(f"Failed to fetch data due to {e}, retrying...")
+            time.sleep(1 / random.randint(1, 5))
+            continue
+        
+    log(f"Failed to fetch data after {max_retries} retries.")
+    return None
+
+
+def dataset_overview():
+    dataset_manifest = json.loads(pathlib.Path(config.dataset_manifest_file_dest).read_text())
+    log(f"File: {config.dataset_manifest_file_dest}")
+    log(f"Contain characers: {dataset_manifest.keys()}")
+    log(f"Total number of samples: {sum(len(dataset_manifest[char]) for char in dataset_manifest)}")
+    for i in dataset_manifest:
+        log(f"{i}: {len(dataset_manifest[i])} samples")
+        
+        
+def cached_data(key: str, data_resolver: typing.Callable):
+    global cache
+
+    cache_item = cache.get(key, None)
+    if cache_item is not None:
+        return cache_item
+    
+    cache[key] = data_resolver()
+    return cache[key]
