@@ -1,34 +1,64 @@
-muted_characters = ["Kinich", "Kachina", "Nahida", "Tighnari", "Candace", "Dehya", "Collei"]
+muted_characters = [
+    "Kinich",
+    "Kachina",
+    "Nahida",
+    "Tighnari",
+    "Candace",
+    "Dehya",
+    "Collei",
+    "Dori",
+    "Kaveh",
+    "Alhaitham",
+    "Nilou",
+    "Faruzan"
+]
+
 muted_language = "en"
 
 models_path = {
     "Kinich": (
-        "thirdparty/GPTSoViTs/GPT_weights_v2/kinich-e15.ckpt", # GPT
-        "thirdparty/GPTSoViTs/SoVITS_weights_v2/kinich_e10_s360.pth" # SoVITS
+        "thirdparty/GPTSoViTs/GPT_weights_v2/kinich-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/kinich_e10_s360.pth"  # SoVITS
     ),
     "Kachina": (
-        "thirdparty/GPTSoViTs/GPT_weights_v2/kachina-e15.ckpt", # GPT
-        "thirdparty/GPTSoViTs/SoVITS_weights_v2/kachina_e8_s408.pth" # SoVITS
+        "thirdparty/GPTSoViTs/GPT_weights_v2/kachina-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/kachina_e8_s408.pth"  # SoVITS
     ),
     "Candace": (
-        "thirdparty/GPTSoViTs/GPT_weights_v2/Candace-e15.ckpt", # GPT
-        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Candace_e8_s160.pth" # SoVITS
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Candace-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Candace_e8_s160.pth"  # SoVITS
     ),
     "Nahida": (
-        "thirdparty/GPTSoViTs/GPT_weights_v2/Nahida-e10.ckpt", # GPT
-        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Nahida_e8_s432.pth" # SoVITS
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Nahida-e10.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Nahida_e8_s432.pth"  # SoVITS
     ),
     "Tighnari": (
-        "thirdparty/GPTSoViTs/GPT_weights_v2/Tighnari-e15.ckpt", # GPT
-        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Tighnari_e8_s240.pth" # SoVITS
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Tighnari-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Tighnari_e8_s240.pth"  # SoVITS
     ),
     "Dehya": (
-        "thirdparty/GPTSoViTs/GPT_weights_v2/Dehya-e15.ckpt", # GPT
-        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Dehya_e8_s312.pth" # SoVITS
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Dehya-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Dehya_e8_s312.pth"  # SoVITS
     ),
     "Collei": (
-        "thirdparty/GPTSoViTs/GPT_weights_v2/Collei-e15.ckpt", # GPT
-        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Collei_e8_s192.pth" # SoVITS
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Collei-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Collei_e8_s192.pth"  # SoVITS
+    ),
+    "Dori": (
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Dori-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Dori_e8_s184.pth"  # SoVITS
+    ),
+    "Kaveh": (
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Kaveh-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Kaveh_e8_s128.pth"  # SoVITS
+    ),
+    "Alhaitham": (
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Alhaitham-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Alhaitham_e8_s616.pth"  # SoVITS
+    ),
+    "Nilou": (
+        "thirdparty/GPTSoViTs/GPT_weights_v2/Nilou-e15.ckpt",  # GPT
+        "thirdparty/GPTSoViTs/SoVITS_weights_v2/Nilou_e8_s160.pth"  # SoVITS
     ),
     "default": (
         "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
@@ -53,7 +83,9 @@ sources_to_fetch_voice = [
     "https://genshin-impact.fandom.com/wiki/Through_Mists_of_Smoke_and_Forests_Dark",
     "https://genshin-impact.fandom.com/wiki/Oathkeeper",
     "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
-    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems"
+    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
+    "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
+    "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
 ]
 
 
@@ -67,8 +99,13 @@ source_text_to_dub = [
     "quest:https://genshin-impact.fandom.com/wiki/Give_Her_Memories"
 ]
 
-# save destination
+necessary_replacements = {
+    "TravelerTravelerThe player's chosen name for the Traveler": "Traveler",
+    "He'sHe'sText for male Traveler/She'sShe'sText for female Traveler": "He",
+    "himhimText for male Traveler/herherText for female Traveler": "him",
+}
 
+# save destination
 save_dest_root = "saves"
 save_dest_for_downloaded_voice = f"{save_dest_root}/downloaded_voices"
 dataset_manifest_file_dest = f"{save_dest_root}/dataset_manifest.json"

@@ -57,7 +57,7 @@ def serialize_collection(collection: dict[str, list[tuple[str, str]]]) -> str:
 def reduce_collection(collection: dict[str, list[tuple[str, str]]]) -> dict[str, list[tuple[str, str]]]:
     for char in collection:
         # fetch 10 elements for each character
-        save_keys = [i for i in collection[char]][0:10]
+        save_keys = [i for i in collection[char]][0:]
         collection[char] = save_keys
         
     return collection

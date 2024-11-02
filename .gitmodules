@@ -1,5 +1,2 @@
-[submodule "thirdparty/fish"]
-	path = thirdparty/fish
-	url = https://github.com/fishaudio/fish-speech
 [submodule "thirdparty/GPTSoViTs"]
 	path = thirdparty/GPTSoViTs

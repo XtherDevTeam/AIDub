@@ -17,7 +17,7 @@ def do_voice_collection():
     
     for i in sources_to_fetch_voice:
         
-        quests = fandom.fetch_quest_entries(i)
+        quests = common.request_retry_wrapper(lambda: fandom.fetch_quest_entries(i))
         
 
         for quest in quests:
@@ -26,7 +26,7 @@ def do_voice_collection():
             collections = fandom.merge_voice_collections([collections, collection])
 
     # download voices
-    # voice_fetch.reduce_collection(collections)
+    voice_fetch.reduce_collection(collections)
     voice_fetch.fetch_collection(collections)
 
     with open(dataset_manifest_file_dest, 'w') as f:

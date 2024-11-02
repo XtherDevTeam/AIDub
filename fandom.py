@@ -1,7 +1,7 @@
 # fandom.com operations related
 import time
 import urllib
-
+import config
 import bs4
 import requests
 import urllib.parse
@@ -20,7 +20,7 @@ def fetch_quest_entries_from_chapter_page(page_url: str) -> list[str]:
     list[str]: List of quest entries present in the chapter.
     """
     collection = []
-    req = requests.get(page_url)
+    req = common.request_retry_wrapper(lambda: requests.get(page_url))
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     # find all <li> tags with ::marker
@@ -118,10 +118,13 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
                     common.log(f"No vocal file found for character: {char} in text: {i.text}")
                     continue
                 src = i.find('span').find('a').attrs['href']
-                print(f"Found character {char} vocal file: {src}")
+                common.log(f"Found character {char} vocal file: {src}")
                 # remove other texts
                 text = i.get_text()
                 text = text[text.find(f'{char}: ') + len(f'{char}: '):]
+                for i in config.necessary_replacements:
+                    common.log(f"Replacing {i} with {config.necessary_replacements[i]} in text: {text}")
+                    text = text.replace(i, config.necessary_replacements[i])
 
                 if collection.get(char) is None:
                     collection[char] = []
@@ -159,13 +162,9 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
     Returns:
     dict[str, list[tuple[str, str]]]: Dictionary containing the VO of each target VA of the chapter.
     """
-
-    req = requests.get(page_url)
-    req.encoding = "utf-8"
-    document = bs4.BeautifulSoup(req.text, "html.parser")
     collection = {}
 
-    req = requests.get(page_url)
+    req = common.request_retry_wrapper(lambda: requests.get(page_url))
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     dialogueParts = document.find_all('div', {'class': 'dialogue'})

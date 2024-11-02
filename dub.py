@@ -87,7 +87,7 @@ def setup_gpt_sovits_client(ckpt: str, pth: str):
     
 def get_tts_models(char: str):
     # ckpt, pth
-    return config.models_path[char]
+    return config.models_path.get(char, config.models_path['default'])
     
     
     
