@@ -57,8 +57,7 @@ if __name__ == '__main__':
     parser.description = 'AI Dubbing for Genshin Impact Natlan Region due to the EN VA Strike'
     parser.add_argument('--voice', action='store_true', help='Fetch voices for dataset')
     parser.add_argument('--subtitle', action='store_true', help='Fetch subtitles for dubbing')
-    parser.add_argument('--finetune', action='store_true', help='Finetune the model')
-    parser.add_argument('--inference-server', action='store_true', help='Start fish-speech inference server for dubbing')
+    parser.add_argument('--inference-server', action='store_true', help='Start GPT-SoVITs inference server for dubbing')
     parser.add_argument('--dub-all', action='store_true', help='Dub all the subtitles in the manifest file')
     parser.add_argument('--emotion-classification', action='store_true', help='Pre-process the audio files and generate emotion analsysis configuration for dubbing')
     parser.add_argument('--dataset-overview', action='store_true', help='Check the dataset overview')
@@ -68,8 +67,6 @@ if __name__ == '__main__':
         do_voice_collection()
     elif args.subtitle:
         do_subtitle_collection()
-    elif args.finetune:
-        do_finetune()
     elif args.dub_all:
         dub.dub_all()
     elif args.inference_server:

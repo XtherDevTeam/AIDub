@@ -7,3 +7,4 @@ fuzzywuzzy
 pydub
 simpleaudio
 pylcs
+bettercam
