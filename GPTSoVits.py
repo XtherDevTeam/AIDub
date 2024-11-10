@@ -1,6 +1,7 @@
 import common
 import requests
 import urllib.parse
+import subprocess
 
 
 class GPTSoVitsAPI():
@@ -169,3 +170,14 @@ class GPTSoVitsAPI():
     def control(self, command: str):
         requests.post(f'{self.api_url}/control', json={
             "command": command})
+
+def run_get_text() -> subprocess.Popen:
+    """
+    Run the get_text.py script to get text from the user.
+
+    Returns:
+        subprocess.Popen: Popen object of the get_text.py script.
+    """
+    current_python_exec = subprocess.check_output(['which', 'python3']).decode().strip()
+    
+    subprocess.Popen()

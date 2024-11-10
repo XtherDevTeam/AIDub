@@ -5,6 +5,7 @@ import config
 import os
 import json
 import pathlib
+import requests
 
 def serialize_collection(collection: dict[str, list[str]]):
     return json.dumps(collection)
@@ -55,7 +56,7 @@ def generate_prompt_from_voice(char: str, text: str) -> tuple[str, str]:
     return voice['text'], voice['dest']
     
     
-def dub_one(text: str, char: str):
+def dub_one(text: str, char: str, raw_response: bool = False) -> tuple[str, str] | requests.Response:
     label = common.md5(text)
     dest_path = os.path.join(config.dub_result_dest, f"{label}.aac")
     if os.path.exists(dest_path):
@@ -68,9 +69,11 @@ def dub_one(text: str, char: str):
     if resp.status_code != 200:
         common.panic(f"Error generating dub for {text} for {char}: {resp.text}")
     
-    pathlib.Path(dest_path).write_bytes(resp.content)
-    
-    return label, dest_path
+    if raw_response:
+        return resp
+    else:
+        pathlib.Path(dest_path).write_bytes(resp.content)
+        return label, dest_path
     
     
     

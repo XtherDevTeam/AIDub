@@ -115,5 +115,10 @@ dub_result_manifest_dest = f"{save_dest_root}/dub_result_manifest.json"
 sentiment_analysis_dest = f"{save_dest_root}/sentiment_analysis.json"
 screenshot_dest = f"{save_dest_root}/screenshot.png"
 
+# gpt sovits configuration
+logs_dest = f"{save_dest_root}/logs"
+gpt_model_path = "thirdparty/GPTSoViTs/GPT_weights_v2"
+sovits_model_path = "thirdparty/GPTSoViTs/SoVITS_weights_v2"
+
 # fish speech configuration
-fish_speech_module_path = "thirdparty/fish"
+fish_speech_module_path = "thirdparty/fish" # deprecated
