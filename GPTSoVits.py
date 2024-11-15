@@ -97,7 +97,7 @@ class GPTSoVitsAPI():
         Returns:
             str: Request string for the v3 API.
         """
-        return f'{self.api_url}/tts?{urllib.parse.urlencode({
+        return f'''{self.api_url}/tts?{urllib.parse.urlencode({
              "text": text,
             "text_lang": text_language,
             "ref_audio_path": ref_audio,
@@ -107,7 +107,7 @@ class GPTSoVitsAPI():
             "streaming_mode": True,
             "parallel_infer": False,
             "tts_infer_yaml_path": self.ttsInferYamlPath
-        })}'
+        })}'''
 
 
     def tts_v3(self, ref_audio: str, ref_text: str, text: str, ref_language: str = 'auto', text_language: str = 'auto') -> requests.Response:

@@ -1,6 +1,6 @@
 bs4
 requests
-clint
+# clint
 pynput
 pyscreenshot
 fuzzywuzzy

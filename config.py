@@ -122,3 +122,11 @@ sovits_model_path = "thirdparty/GPTSoViTs/SoVITS_weights_v2"
 
 # fish speech configuration
 fish_speech_module_path = "thirdparty/fish" # deprecated
+
+# Python 3.10 adaption
+import pathlib
+import sys
+if sys.version_info.major == 3 and sys.version_info.minor <= 10:
+    print("Python 3.10 detected, applying adaptions...")
+    pathlib.Path._real_read_text = pathlib.Path.read_text
+    pathlib.Path.read_text = lambda self, encoding='utf-8', errors=None: self._real_read_text(encoding=encoding, errors=errors)

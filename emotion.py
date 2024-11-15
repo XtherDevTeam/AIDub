@@ -3,16 +3,24 @@ import json
 import config
 import common
 from transformers import pipeline
+import torch
 
 # Load the BERT-Emotions-Classifier
-classifier = pipeline("text-classification",
-                      model="ayoubkirouane/BERT-Emotions-Classifier", device='cuda')
+use_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+classifier = None
 
 
 analysis_file = {}
 
 
+def load_bert_classifier():
+    global classifier
+    if classifier is None:
+        classifier = pipeline("text-classification", model="bhadresh-savani/bert-base-uncased-emotion", device=use_device)
+
+
 def classify_emotion(text):
+    load_bert_classifier()
     results = classifier(text)
     return results[0]['label']
 
@@ -33,18 +41,13 @@ def initialize_analysis_file():
     for char in dataset:
         common.log(f"Initializing analysis file for {char}")
         file_struct[char] = {
-            # seven emotions, which are anger, anticipation, disgust, fear, joy, love, optimism, pessimism, sadness, surprise, trust
-            'anger': [],
-            'anticipation': [],
-            'disgust': [],
-            'fear': [],
-            'joy': [],
-            'love': [],
-            'optimism': [],
-            'pessimism': [],
-            'sadness': [],
-            'surprise': [],
-            'trust': []
+            # seven emotions, which are sadness, joy, love, anger, fear, surprise
+            "sadness": [],
+            "joy": [],
+            "love": [],
+            "anger": [],
+            "fear": [],
+            "surprise": []
         }
     pathlib.Path(config.sentiment_analysis_dest).write_text(
         json.dumps(file_struct))
@@ -57,6 +60,7 @@ def save_analysis_file():
 
 
 def do_batch_classification(char):
+    load_bert_classifier()
     dataset = json.loads(pathlib.Path(
         config.dataset_manifest_file_dest).read_text())
     if char not in dataset:
@@ -90,6 +94,7 @@ def choose_a_voice_by_text(char: str, text: str) -> dict[str, str] | None:
     Returns:
         dict[str, str] | None: A dictionary containing the hash_id, text, score, and destination of the most representative voice for the given text. If no suitable voice is found, returns None.
     """
+    load_bert_classifier()
     result = classifier(text)[0]
     label = result['label']
     

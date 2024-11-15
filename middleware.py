@@ -63,7 +63,7 @@ def emotion_classification():
     return makeResult(ok=True, data=f'')
 
 
-@app.route('/dub')
+@app.route('/dub', methods=['GET'])
 def dub_route():
     form = flask.request.json
     text = form['text']
@@ -77,62 +77,70 @@ def dub_route():
     return resp
 
 
-@app.route('/gpt_sovits/dataset_preprocessing/get_text')
+@app.route('/gpt_sovits/dataset_preprocessing/get_text', methods=['POST'])
 def get_text():
     for char in config.muted_characters:
         try:
             dest = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}")
-            list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}.list")
-            communication.preprocess_dataset("1a", char, list.absolute(), dest.absolute(), "0-1")
+            list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}/{char}.list")
+            communication.preprocess_dataset("1a", char, str(list.absolute()), str(dest.absolute()), "0")
         except Exception as e:
             return makeResult(ok=False, data=f"Error while preprocessing dataset for {char}: {e}")
     return makeResult(ok=True, data=f"Dataset for {config.muted_characters} preprocessed successfully.")
 
-@app.route('/gpt_sovits/dataset_preprocessing/get_hubert_wav32k')
+@app.route('/gpt_sovits/dataset_preprocessing/get_hubert_wav32k', methods=['POST'])
 def get_hubert_wav32k():
     for char in config.muted_characters:
         try:
             dest = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}")
-            list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}.list")
-            communication.preprocess_dataset("1b", char, list.absolute(), dest.absolute())
+            list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}/{char}.list")
+            communication.preprocess_dataset("1b", char, str(list.absolute()), str(dest.absolute()), "0")
         except Exception as e:
             return makeResult(ok=False, data=f"Error while preprocessing dataset for {char}: {e}")
     return makeResult(ok=True, data=f"Dataset for {config.muted_characters} preprocessed successfully.")
 
-@app.route('/gpt_sovits/dataset_preprocessing/name_to_semantic')
+@app.route('/gpt_sovits/dataset_preprocessing/name_to_semantic', methods=['POST'])
 def name_to_semantic():
     for char in config.muted_characters:
         try:
             dest = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}")
-            list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}.list")
-            communication.preprocess_dataset("1c", char, list.absolute(), dest.absolute())
+            list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}/{char}.list")
+            communication.preprocess_dataset("1c", char, str(list.absolute()), str(dest.absolute()), "0")
         except Exception as e:
             return makeResult(ok=False, data=f"Error while preprocessing dataset for {char}: {e}")
     return makeResult(ok=True, data=f"Dataset for {config.muted_characters} preprocessed successfully.")
 
 
-@app.route('/gpt_sovits/train_model_gpt')
+@app.route('/gpt_sovits/train_model_gpt', methods=['POST'])
 def train_model_gpt():
     form = flask.request.json
     batch_size = form.get('batch_size', None)
     total_epoch = form.get('total_epoch', 15)
     for char in config.muted_characters:
         try:
-            communication.train_s1(char, "0-1", batch_size=batch_size, total_epoch=total_epoch)
+            communication.train_s1(char, "0", batch_size=batch_size, total_epoch=total_epoch)
             return makeResult(ok=True, data=f"Model for {char} trained successfully.")
         except Exception as e:
             return makeResult(ok=False, data=f"Error while training model for {char}: {e}")
 
 
-@app.route('/gpt_sovits/train_model_sovits')
+@app.route('/gpt_sovits/train_model_sovits', methods=['POST'])
 def train_model_sovits():
     form = flask.request.json
     batch_size = form.get('batch_size', None)
     total_epoch = form.get('total_epoch', 15)
     for char in config.muted_characters:
         try:
-            communication.train_s2(char, "0-1", batch_size=batch_size, total_epoch=total_epoch)
+            communication.train_s2(char, "0", batch_size=batch_size, total_epoch=total_epoch)
             return makeResult(ok=True, data=f"Model for {char} trained successfully.")
         except Exception as e:
             return makeResult(ok=False, data=f"Error while training model for {char}: {e}")
     
+    
+@app.route('/info', methods=['POST'])
+def info():
+    return makeResult(ok=True, data=f"Server is running.")
+    
+
+if __name__ == '__main__':
+    app.run(debug=False, host='0.0.0.0', port=2731)

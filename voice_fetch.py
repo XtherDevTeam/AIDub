@@ -69,7 +69,8 @@ def generate_text_list(colab_project_prefix: pathlib.Path = pathlib.Path(config.
         for i in collection[char]:
             text, dest = collection[char][i]['text'], collection[char][i]['dest']
             # vocal_path|speaker_name|language|text
-            generated += f"{pathlib.Path(dest).name}|{char}|{config.muted_language}|{text.replace('\n', '')}\n"
+            text = text.replace('\n', '')
+            generated += f"{pathlib.Path(dest).name}|{char}|{config.muted_language}|{text}" + "\n"
         
             with open(pathlib.Path(config.save_dest_for_downloaded_voice) / char / f"{char}.list", "w+") as f:
                 f.write(generated)

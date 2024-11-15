@@ -52,7 +52,6 @@ def do_finetune():
 
 if __name__ == '__main__':
     # use argparse to parse command line arguments
-
     parser = argparse.ArgumentParser()
     parser.description = 'AI Dubbing for Genshin Impact Natlan Region due to the EN VA Strike'
     parser.add_argument('--voice', action='store_true', help='Fetch voices for dataset')

@@ -1,17 +1,28 @@
 import os
 import json
 import yaml
-from thirdparty.GPTSoViTs.config import python_exec, exp_root, is_half, pretrained_sovits_path, GPT_weight_root
+from thirdparty.GPTSoViTs.config import python_exec, exp_root, is_half, pretrained_sovits_path
 from thirdparty.GPTSoViTs.tools.my_utils import clean_path, check_for_existance, check_details
-from subprocess import Popen
+from subprocess import Popen, PIPE
+import sys
 from thirdparty.GPTSoViTs.tools import my_utils
 import config
 
-SoVITS_weight_root=["thirdparty/GPTSoViTs/SoVITS_weights_v2","thirdparty/GPTSoViTs/SoVITS_weights"]
-GPT_weight_root=["thirdparty/GPTSoViTs/GPT_weights_v2","thirdparty/GPTSoViTs/GPT_weights"]
+SoVITS_weight_root=["GPTSoViTs/SoVITS_weights_v2","GPTSoViTs/SoVITS_weights"]
+GPT_weight_root=["GPTSoViTs/GPT_weights_v2","GPTSoViTs/GPT_weights"]
 
 
-def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, bert_pretrained_dir="thirdparty/GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large", ssl_pretrained_dir="thirdparty/GPT_SoVITS/pretrained_models/chinese-hubert-base"):
+def gpu_numbers():
+    """
+    获取 GPU 卡号.
+    """
+    gpu_nums = os.environ.get("CUDA_VISIBLE_DEVICES", "")
+    if gpu_nums == "":
+        gpu_nums = "0"
+    return gpu_nums
+
+
+def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, bert_pretrained_dir="GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large", ssl_pretrained_dir="GPT_SoVITS/pretrained_models/chinese-hubert-base"):
     """
     对数据集进行预处理，生成配置文件并训练 GPT 模型.
 
@@ -21,8 +32,8 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
         inp_text (str): 文本标注文件路径.
         inp_wav_dir (str): 音频数据集路径.
         gpu_numbers (str): GPU 卡号，以 '-' 分割.
-        bert_pretrained_dir (str, optional): 预训练 BERT 模型路径. Defaults to "thirdparty/GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large".
-        ssl_pretrained_dir (str, optional): 预训练 SSL 模型路径. Defaults to "thirdparty/GPT_SoVITS/pretrained_models/chinese-hubert-base".
+        bert_pretrained_dir (str, optional): 预训练 BERT 模型路径. Defaults to "GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large".
+        ssl_pretrained_dir (str, optional): 预训练 SSL 模型路径. Defaults to "GPT_SoVITS/pretrained_models/chinese-hubert-base".
     """
     inp_text = clean_path(inp_text)
     inp_wav_dir = clean_path(inp_wav_dir)
@@ -30,8 +41,8 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
     if check_for_existance([inp_text, inp_wav_dir], is_dataset_processing=True):
         check_details([inp_text, inp_wav_dir], is_dataset_processing=True)
 
-    opt_dir = os.path.join(exp_root, exp_name)
-    os.makedirs(opt_dir, exist_ok=True)
+    opt_dir = os.path.join('thirdparty', 'GPTSoViTs', exp_root, exp_name)
+    passing_opt_dir = os.path.join(exp_root, exp_name)
 
 
     def run_process(script, env_vars):
@@ -39,8 +50,8 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
         os.environ.update(env_vars)
         cmd = f'"{python_exec}" {script}'
         print(cmd)
-        p = Popen(cmd, shell=True)
-        p.wait()
+        p = Popen(cmd, shell=True, stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno(), cwd="thirdparty/GPTSoViTs")
+        p.communicate()
 
 
     if step == "1a":
@@ -51,7 +62,7 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
                 "inp_text": inp_text,
                 "inp_wav_dir": inp_wav_dir,
                 "exp_name": exp_name,
-                "opt_dir": opt_dir,
+                "opt_dir": passing_opt_dir,
                 "bert_pretrained_dir": bert_pretrained_dir,
                 "is_half": str(is_half),
             }
@@ -64,6 +75,7 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
                     "_CUDA_VISIBLE_DEVICES": gpu_names[i_part],
                 })
                 run_process("GPT_SoVITS/prepare_datasets/1-get-text.py", config)
+                print(f"1a done for part {i_part} of {all_parts} parts, exp_name: {exp_name} with config {config}")
 
             opt = []
             for i_part in range(all_parts):
@@ -83,7 +95,7 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
             "inp_text": inp_text,
             "inp_wav_dir": inp_wav_dir,
             "exp_name": exp_name,
-            "opt_dir": opt_dir,
+            "opt_dir": passing_opt_dir,
             "cnhubert_base_dir": ssl_pretrained_dir,
             "is_half": str(is_half),
         }
@@ -105,7 +117,7 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
             config = {
                 "inp_text": inp_text,
                 "exp_name": exp_name,
-                "opt_dir": opt_dir,
+                "opt_dir": passing_opt_dir,
                 "pretrained_s2G": SoVITS_weight_root[-int("v2"[-1]) + 2], #版本写死v2
                 "s2config_path": "GPT_SoVITS/configs/s2.json",
                 "is_half": str(is_half),
@@ -168,12 +180,13 @@ def train_s1(exp_name, gpu_numbers, batch_size=None, total_epoch=15, if_dpo=Fals
     data["train"]["if_dpo"] = if_dpo
     data["train"]["half_weights_save_dir"] = GPT_weight_root[-int(version[-1]) + 2]
     data["train"]["exp_name"] = exp_name
-    opt_dir = os.path.join(exp_root, exp_name)
-    data["train_semantic_path"] = os.path.join(opt_dir, "6-name2semantic.tsv")
-    data["train_phoneme_path"] = os.path.join(opt_dir, "2-name2text.txt")
-    data["output_dir"] = os.path.join(opt_dir, "logs_s1")
+    opt_dir = os.path.join('thirdparty', 'GPTSoViTs', exp_root, exp_name)
+    passing_opt_dir = os.path.join(exp_root, exp_name)
+    data["train_semantic_path"] = os.path.join(passing_opt_dir, "6-name2semantic.tsv")
+    data["train_phoneme_path"] = os.path.join(passing_opt_dir, "2-name2text.txt")
+    data["output_dir"] = os.path.join(passing_opt_dir, "logs_s1")
 
-    tmp_config_path = os.path.join("TEMP", "tmp_s1.yaml")
+    tmp_config_path = os.path.join('thirdparty', 'GPTSoViTs', "TEMP", "tmp_s1.yaml")
     with open(tmp_config_path, "w") as f:
         yaml.dump(data, f, default_flow_style=False)
 
@@ -207,7 +220,8 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
     with open("GPT_SoVITS/configs/s2.json") as f:
         data = json.load(f)
 
-    s2_dir = os.path.join(exp_root, exp_name)
+    s2_dir = os.path.join('thirdparty', 'GPTSoViTs', exp_root, exp_name)
+    passing_s2_dir = os.path.join(exp_root, exp_name)
     os.makedirs(os.path.join(s2_dir, "logs_s2"), exist_ok=True)
 
     if check_for_existance([s2_dir], is_train=True):
@@ -227,12 +241,12 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
     data["train"]["save_every_epoch"] = save_every_epoch
     data["train"]["gpu_numbers"] = gpu_numbers  # 这里不需要分割
     data["model"]["version"] = version
-    data["data"]["exp_dir"] = data["s2_ckpt_dir"] = s2_dir
+    data["data"]["exp_dir"] = data["s2_ckpt_dir"] = passing_s2_dir
     data["save_weight_dir"] = SoVITS_weight_root[-int(version[-1]) + 2]
     data["name"] = exp_name
     data["version"] = version
 
-    tmp_config_path = os.path.join("TEMP", "tmp_s2.json")
+    tmp_config_path = os.path.join('thirdparty', 'GPTSoViTs', "TEMP", "tmp_s2.json")
     with open(tmp_config_path, "w") as f:
         json.dump(data, f)
 
