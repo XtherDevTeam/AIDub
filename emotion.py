@@ -4,6 +4,7 @@ import config
 import common
 from transformers import pipeline
 import torch
+import random
 
 # Load the BERT-Emotions-Classifier
 use_device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -83,7 +84,7 @@ def do_batch_classification(char):
     common.log(f"Classification of {char} complete")
     
 
-def choose_a_voice_by_text(char: str, text: str) -> dict[str, str] | None:
+def choose_a_voice_by_text(char: str, text: str, randomed: bool = True) -> dict[str, str] | None:
     """
     Chooses a most representative voice for the given text based on the sentiment analysis file.
 
@@ -111,7 +112,7 @@ def choose_a_voice_by_text(char: str, text: str) -> dict[str, str] | None:
         return result
     
     ranked_analysis = common.cached_data(f"ranked_analysis_{char}_{label}", lambda: resolver(ranked_analysis))
-    return ranked_analysis[0] if len(ranked_analysis) > 0 else None
+    return random.choice(ranked_analysis) if len(ranked_analysis) > 0 else None
 
     
 def do_classification():

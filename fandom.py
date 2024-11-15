@@ -224,3 +224,42 @@ def merge_subtitle_collections(collections: list[dict[str, list[str]]]):
                 merged[char] = []
             merged[char].extend(sub_list)
     return merged
+
+
+def find_potentially_missing_voice_over_chars(page_url: str, target_va: list[str]) -> list[str]:
+    """
+    
+
+    Params:
+    page_url (str): URL of the chapter page.
+
+    Returns:
+    
+    """
+    result = []
+
+    req = common.request_retry_wrapper(lambda: requests.get(page_url))
+    req.encoding = "utf-8"
+    document = bs4.BeautifulSoup(req.text, "html.parser")
+    dialogueParts = document.find_all('div', {'class': 'dialogue'})
+    
+    if dialogueParts is None:
+        common.log(f"unexpected dialogue part: {page_url}")
+        return []
+
+    for dialoguePart in dialogueParts:
+        ddLabels = dialoguePart.find_all(name='dd')
+        for i in ddLabels:
+            bLabel = i.find('b')
+            if bLabel is None:
+                # useless dialogue, skip
+                continue
+
+            char = bLabel.text[0:-1]
+
+            if char not in target_va and i.text.strip().startswith(f'{char}:') and char not in config.ignored_characters and '&' not in char:
+                if i.find('span') is None:
+                    common.log(f"Possible missing character {char} voiceline: {i.text}")
+                    result.append(char)
+
+    return [i for i in set(result)]

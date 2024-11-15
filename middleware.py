@@ -1,3 +1,30 @@
+"""
+https://github.com/XtherDevTeam/AIDub
+
+AIDub Middleware
+
+Copyright (C) 2024 Jerry Chou, All rights reserved.
+Open-source under the MIT license.
+
+This module implements the API server for AIDub for easier integation with other applications,
+includes the following functionalities:
+
+- Dataset downloading
+- Emotion classification
+- Dubbing
+- GPT-SoVITs dataset preprocessing
+- GPT-SoVITs model training
+
+To run the server, simply run the following command in the terminal:
+
+```
+python middleware.py
+```
+
+The server will be running on `http://localhost:2731`.
+"""
+
+
 import os
 import pathlib
 import flask_cors
@@ -49,8 +76,13 @@ def do_voice_collection():
 @app.route('/download_dataset', methods=['POST'])
 def download_dataset():
     request_form = flask.request.json
-    char_names = request_form['char_names']
-    config.muted_characters = char_names
+    char_names = request_form.get('char_names', [])
+    sources_to_fetch = request_form.get('sources_to_fetch', [])
+    if char_names == [] or sources_to_fetch == []:
+        return makeResult(ok=False, data=f"Invalid request, char_names and sources_to_fetch are required.")
+    
+    config.muted_characters = [i for i in set(char_names + config.muted_characters)]
+    config.sources_to_fetch_voice = [i for i in set(sources_to_fetch + config.sources_to_fetch_voice)]
     do_voice_collection()
     
     return makeResult(ok=True, data=f"Dataset for {char_names} downloaded successfully.")
@@ -68,12 +100,10 @@ def dub_route():
     form = flask.request.json
     text = form['text']
     char_name = form['char_name']
-    d = emotion.choose_a_voice_by_text(char_name, text)
     r = dub.dub_one(text, char_name, True)
     resp = flask.make_response()
-    resp.headers['Content-Type'] = 'audio/aac'
-    resp.headers['Content-Disposition'] = f'attachment; filename="{char_name}.aac"'
-    resp.data = r
+    resp.headers['Content-Type'] = r.headers['Content-Type']
+    resp.data = r.iter_content(chunk_size=10*1024)
     return resp
 
 
@@ -118,10 +148,12 @@ def train_model_gpt():
     total_epoch = form.get('total_epoch', 15)
     for char in config.muted_characters:
         try:
+            if char in config.models_path:
+                continue
             communication.train_s1(char, "0", batch_size=batch_size, total_epoch=total_epoch)
-            return makeResult(ok=True, data=f"Model for {char} trained successfully.")
         except Exception as e:
             return makeResult(ok=False, data=f"Error while training model for {char}: {e}")
+    return makeResult(ok=True, data=f"Model for {config.muted_characters} trained successfully.")
 
 
 @app.route('/gpt_sovits/train_model_sovits', methods=['POST'])
@@ -131,16 +163,26 @@ def train_model_sovits():
     total_epoch = form.get('total_epoch', 15)
     for char in config.muted_characters:
         try:
+            if char in config.models_path:
+                continue
             communication.train_s2(char, "0", batch_size=batch_size, total_epoch=total_epoch)
-            return makeResult(ok=True, data=f"Model for {char} trained successfully.")
         except Exception as e:
             return makeResult(ok=False, data=f"Error while training model for {char}: {e}")
+        
+    return makeResult(ok=True, data=f"Model for {config.muted_characters} trained successfully.")
     
     
 @app.route('/info', methods=['POST'])
 def info():
-    return makeResult(ok=True, data=f"Server is running.")
+    return makeResult(ok=True, data={
+        "status": "running",
+        "models_path": config.models_path,
+        "available_characters": config.muted_characters,
+    })
     
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=2731)
+    # dynamically load available models and muted characters, differ from the ones in config.py
+    config.models_path = common.get_available_model_path()
+    config.muted_characters = common.get_muted_chars()
+    app.run(debug=False, host='192.168.1.7', port=2731)

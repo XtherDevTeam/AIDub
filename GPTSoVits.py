@@ -110,7 +110,7 @@ class GPTSoVitsAPI():
         })}'''
 
 
-    def tts_v3(self, ref_audio: str, ref_text: str, text: str, ref_language: str = 'auto', text_language: str = 'auto') -> requests.Response:
+    def tts_v3(self, ref_audio: str, ref_text: str, text: str, ref_language: str = 'auto', text_language: str = 'auto', streamed: bool = False) -> requests.Response:
         """
         Run TTS inference using the v3 API from the fast_inference_ branch.
 
@@ -131,11 +131,11 @@ class GPTSoVitsAPI():
             "prompt_text": ref_text,
             "prompt_lang": ref_language,
             "media_type": "aac",
-            "streaming_mode": False,
+            "streaming_mode": True,
             "parallel_infer": False
-        }, stream=False)
+        }, stream=True)
 
-    def tts(self, ref_audio: str, ref_text: str, text: str, ref_language: str = 'auto', text_language: str = 'auto') -> requests.Response:
+    def tts(self, ref_audio: str, ref_text: str, text: str, ref_language: str = 'auto', text_language: str = 'auto', streamed: bool = False) -> requests.Response:
         """
         Run TTS inference based on the API version.
 
@@ -145,12 +145,13 @@ class GPTSoVitsAPI():
             text (str): Text to be synthesized.
             ref_language (str, optional): Reference audio language. Defaults to 'auto'.
             text_language (str, optional): Text language. Defaults to 'auto'.
+            streamed (bool, optional): Whether to stream the response. Makes no difference for v1 API. Defaults to False.
 
         Returns:
             requests.Response: Response object from the API.
         """
         if self.usingV3:
-            return self.tts_v3(ref_audio, ref_text, text, ref_language, text_language)
+            return self.tts_v3(ref_audio, ref_text, text, ref_language, text_language, streamed)
         else:
             return self.tts_v1(ref_audio, ref_text, text, ref_language, text_language)
 

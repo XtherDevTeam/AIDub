@@ -10,6 +10,7 @@ import common
 import config
 import fandom
 import json
+import threading
 
 def make_dirs():
     os.makedirs(config.save_dest_for_downloaded_voice, exist_ok=True)
@@ -29,17 +30,28 @@ def download_task_wrapper(char: str, text: str, url: str):
     return common.request_retry_wrapper(lambda: download_task())
 
 def dispatch_download_task(char: str, text: str, url: str):
-    common.run_in_parallel(download_task_wrapper, (char, text, url))
+    x = lambda: download_task_wrapper(char, text, url)
+    # common.run_in_parallel(, ())
+    x()
 
 
 def fetch_collection(collection: dict[str, list[tuple[str, str]]]):
     make_dirs()
     for char in collection:
         os.makedirs(pathlib.Path(config.save_dest_for_downloaded_voice) / char, exist_ok=True)
+        # seperate 8 list with same counts of elements
+        def split_list(lst, n):
+            return [lst[i:i+n] for i in range(0, len(lst), n)]
+        x = split_list(collection[char], 8)
+        
+        def dispatcher(lst):
+            for voice in lst:
+                text, url = voice
+                dispatch_download_task(char, text, url)
+        for i in x:
+            threading.Thread(target=dispatcher, args=(i,)).start()
 
-        for voice in collection[char]:
-            text, url = voice
-            dispatch_download_task(char, text, url)
+
 
 def serialize_collection(collection: dict[str, list[tuple[str, str]]]) -> str:
     result = {}

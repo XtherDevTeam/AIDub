@@ -49,9 +49,22 @@ def do_subtitle_collection():
 
 def do_finetune():
     finetune.start()
+    
+    
+def find_missing_voices():
+    result = []
+    for i in source_text_to_dub:
+        quests = [i[i.index(':')+1:]] if i.startswith('quest:') else fandom.fetch_quest_entries(i)
+
+        for quest in quests:
+            r = fandom.find_potentially_missing_voice_over_chars(quest, muted_characters)
+            result.extend(r)
+    
+    return [i for i in set(result)]
 
 if __name__ == '__main__':
     # use argparse to parse command line arguments
+
     parser = argparse.ArgumentParser()
     parser.description = 'AI Dubbing for Genshin Impact Natlan Region due to the EN VA Strike'
     parser.add_argument('--voice', action='store_true', help='Fetch voices for dataset')
@@ -60,6 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('--dub-all', action='store_true', help='Dub all the subtitles in the manifest file')
     parser.add_argument('--emotion-classification', action='store_true', help='Pre-process the audio files and generate emotion analsysis configuration for dubbing')
     parser.add_argument('--dataset-overview', action='store_true', help='Check the dataset overview')
+    parser.add_argument('--missing-voices', action='store_true', help='Find potentially missing voices for the subtitles')
     args = parser.parse_args()
 
     if args.voice:
@@ -74,5 +88,7 @@ if __name__ == '__main__':
         emotion.do_classification()
     elif args.dataset_overview:
         common.dataset_overview()
+    elif args.missing_voices:
+        common.log(f'Potentially missing voices: {find_missing_voices()}')
     else:
         parser.print_help()

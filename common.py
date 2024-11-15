@@ -8,6 +8,7 @@ import datetime
 import typing
 import asyncio
 from multiprocessing import cpu_count
+import threading
 
 
 def panic(what: str):
@@ -22,7 +23,7 @@ def md5(s: str) -> str:
     return hashlib.md5(s.encode()).hexdigest()
 
 
-processes = []
+processes : list[threading.Thread] = []
 
 cache = {}
 
@@ -44,7 +45,7 @@ def get_free_worker(func, args_list, max_workers=32) -> int:
     :return: The index of the worker to use.
     """
     global processes
-    p = multiprocessing.Process(target=func, args=args_list)
+    p = threading.Thread(target=func, args=args_list)
     for i in range(len(processes)):
         if not processes[i].is_alive():
             processes[i] = p
@@ -118,3 +119,40 @@ def cached_data(key: str, data_resolver: typing.Callable):
     
     cache[key] = data_resolver()
     return cache[key]
+
+
+def get_available_model_path() -> dict[str, tuple[str, str]]:
+    import re
+    gpt_path = pathlib.Path('thirdparty/GPTSoViTs/GPT_weights_v2')
+    sovits_path = pathlib.Path('thirdparty/GPTSoViTs/SoVITS_weights_v2')
+    model_paths = {}
+    for ckpt, pth in zip(gpt_path.iterdir(), sovits_path.iterdir()):
+        if ckpt is not None:
+            # trunc from the first char to first - or _
+            model_name = re.sub(r'[^\w\d-]', '', ckpt.stem.split('-')[0])
+            # convert the first char to uppercase
+            model_name = model_name[0:1].upper() + model_name[1:]
+            val = model_paths.get(model_name, ["", ""])
+            val[0] = ckpt
+            model_paths[model_name] = val
+        if pth is not None:
+            # trunc from the first char to first _ or -
+            model_name = re.sub(r'[^\w\d_]', '', pth.stem.split('_')[0])
+            # convert the first char to uppercase
+            model_name = model_name[0:1].upper() + model_name[1:]
+            val = model_paths.get(model_name, ["", ""])
+            val[1] = pth
+            model_paths[model_name] = val
+    
+    model_paths['Default'] = [
+        "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
+        "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth"
+    ]
+    for i in model_paths:
+        model_paths[i] = (str(model_paths[i][0]), str(model_paths[i][1]))
+        
+    return model_paths
+
+
+def get_muted_chars() -> list[str]:
+    return [i for i in json.loads(pathlib.Path(config.sentiment_analysis_dest).read_text()).keys()]

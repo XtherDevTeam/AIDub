@@ -64,14 +64,19 @@ def dub_one(text: str, char: str, raw_response: bool = False) -> tuple[str, str]
         return label, dest_path
     pTexts, pDests = generate_prompt_from_voice(char, text)
     
-    resp = GPTSoVitsAPI.tts(pDests, pTexts, text, 'en', 'en')
-    
-    if resp.status_code != 200:
-        common.panic(f"Error generating dub for {text} for {char}: {resp.text}")
-    
     if raw_response:
+        resp = GPTSoVitsAPI.tts(pDests, pTexts, text, 'en', 'en', True)
+    
+        if resp.status_code != 200:
+            common.panic(f"Error generating dub for {text} for {char}: {resp.text}")
+            
         return resp
     else:
+        resp = GPTSoVitsAPI.tts(pDests, pTexts, text, 'en', 'en')
+    
+        if resp.status_code != 200:
+            common.panic(f"Error generating dub for {text} for {char}: {resp.text}")
+        
         pathlib.Path(dest_path).write_bytes(resp.content)
         return label, dest_path
     

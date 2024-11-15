@@ -13,6 +13,14 @@ muted_characters = [
     "Faruzan"
 ]
 
+
+ignored_characters = [
+    "???",
+    "Crowd",
+    "Everyone",
+]
+
+
 muted_language = "en"
 
 models_path = {
