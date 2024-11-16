@@ -11,20 +11,26 @@ import pathlib
 from config import sources_to_fetch_voice, muted_characters, dataset_manifest_file_dest, source_text_to_dub, \
     dub_manifest_dest
 import emotion
+import importlib
 
 
 def do_voice_collection():
     collections: dict[str, list[tuple[str, str]]] = {}
     
     for i in sources_to_fetch_voice:
-        
-        quests = common.request_retry_wrapper(lambda: fandom.fetch_quest_entries(i))
-        
+        if i.startswith('custom:'):
+            providerName = i[7:i.index(':', 7)]
+            url = i[i.index(':')+1:]
+            provider = importlib.import_module(f'customDataProviders.{providerName}')
+            collections = fandom.merge_voice_collections([collections, provider.fetch_vo_urls(url, muted_characters)])
+        else:
+            quests = common.request_retry_wrapper(lambda: fandom.fetch_quest_entries(i))
+            
 
-        for quest in quests:
-            collection = fandom.fetch_target_vo_from_quest_page(quest, muted_characters)
+            for quest in quests:
+                collection = fandom.fetch_target_vo_from_quest_page(quest, muted_characters)
 
-            collections = fandom.merge_voice_collections([collections, collection])
+                collections = fandom.merge_voice_collections([collections, collection])
 
     # download voices
     voice_fetch.reduce_collection(collections)

@@ -161,3 +161,37 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
 
 def get_muted_chars() -> list[str]:
     return [i for i in json.loads(pathlib.Path(config.sentiment_analysis_dest).read_text()).keys()]
+
+
+def extract_character_name(encoded_char_name: str) -> tuple[str, str]:
+    """
+    Extract the character name and language from the encoded name.
+
+    Args:
+        encoded_char_name (str): The encoded character name.
+
+    Returns:
+        tuple[str, str]: The character name and language.
+    """
+    if '(' not in encoded_char_name:
+        return encoded_char_name, 'en'
+    
+    # find the last occurrence of (xxx) and recognize it as lang
+    lang = encoded_char_name.split('(')[-1].split(')')[0]
+    # remove the lang from the encoded name
+    encoded_char_name = encoded_char_name.replace(f'({lang})', '')
+    return encoded_char_name, lang
+
+
+def encode_character_name(char_name: str, lang: str) -> str:
+    """
+    Encode the character name and language into a single string.
+
+    Args:
+        char_name (str): The character name.
+        lang (str): The language.
+
+    Returns:
+        str: The encoded character name.
+    """
+    return f'{char_name}({lang})'

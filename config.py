@@ -22,6 +22,7 @@ ignored_characters = [
 
 
 muted_language = "en"
+enable_multilingual = True # experimental feature, when enabled, the character name will recognize things in () as languages
 
 models_path = {
     "Kinich": (
@@ -94,6 +95,7 @@ sources_to_fetch_voice = [
     # "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
     # "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
     # "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
+    "custom:huggingface:foobar"
 ]
 
 

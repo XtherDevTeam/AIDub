@@ -36,6 +36,7 @@ import fandom
 import voice_fetch
 import emotion
 import dub
+import importlib
 import communication
 
 def run_gpt_sovits_server():
@@ -54,14 +55,19 @@ def do_voice_collection():
     collections: dict[str, list[tuple[str, str]]] = {}
     
     for i in config.sources_to_fetch_voice:
-        
-        quests = common.request_retry_wrapper(lambda: fandom.fetch_quest_entries(i))
-        
+        if i.startswith('custom:'):
+            providerName = i[7:i.index(':', 7)]
+            url = i[i.index(':')+1:]
+            provider = importlib.import_module(f'customDataProviders.{providerName}')
+            collections = fandom.merge_voice_collections([collections, provider.fetch_vo_urls(url, config.muted_characters)])
+        else:
+            quests = common.request_retry_wrapper(lambda: fandom.fetch_quest_entries(i))
+            
 
-        for quest in quests:
-            collection = fandom.fetch_target_vo_from_quest_page(quest, config.muted_characters)
+            for quest in quests:
+                collection = fandom.fetch_target_vo_from_quest_page(quest, config.muted_characters)
 
-            collections = fandom.merge_voice_collections([collections, collection])
+                collections = fandom.merge_voice_collections([collections, collection])
 
     # download voices
     voice_fetch.reduce_collection(collections)
@@ -94,16 +100,25 @@ def emotion_classification():
     return makeResult(ok=True, data=f'')
 
 
-@app.route('/dub', methods=['GET'])
+@app.route('/dub', methods=['POST', 'GET'])
 def dub_route():
-    form = flask.request.json
-    text = form['text']
-    char_name = form['char_name']
-    r = dub.dub_one(text, char_name, True)
-    resp = flask.make_response()
-    resp.headers['Content-Type'] = r.headers['Content-Type']
-    resp.data = r.iter_content(chunk_size=10*1024)
-    return resp
+    if flask.request.method == 'POST':
+        form = flask.request.json
+        text = form['text']
+        char_name = form['char_name']
+        r = dub.dub_one(text, char_name, True)
+        resp = flask.make_response()
+        resp.headers['Content-Type'] = r.headers['Content-Type']
+        resp.data = r.iter_content(chunk_size=10*1024)
+        return resp
+    else:
+        text = flask.request.args.get('text')
+        char_name = flask.request.args.get('char_name')
+        r = dub.dub_one(text, char_name, True)
+        resp = flask.make_response()
+        resp.headers['Content-Type'] = r.headers['Content-Type']
+        resp.data = r.iter_content(chunk_size=10*1024)
+        return resp
 
 
 @app.route('/gpt_sovits/dataset_preprocessing/get_text', methods=['POST'])
