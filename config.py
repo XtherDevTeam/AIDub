@@ -1,16 +1,16 @@
 muted_characters = [
-    "Kinich",
-    "Kachina",
-    "Nahida",
-    "Tighnari",
-    "Candace",
-    "Dehya",
-    "Collei",
-    "Dori",
-    "Kaveh",
-    "Alhaitham",
-    "Nilou",
-    "Faruzan"
+    # "Kinich",
+    # "Kachina",
+    # "Nahida",
+    # "Tighnari",
+    # "Candace",
+    # "Dehya",
+    # "Collei",
+    # "Dori",
+    # "Kaveh",
+    # "Alhaitham",
+    # "Nilou",
+    # "Faruzan"
 ]
 
 
@@ -76,24 +76,24 @@ models_path = {
 
 # sources to fetch voice
 sources_to_fetch_voice = [
-    "https://genshin-impact.fandom.com/wiki/Black_Stone_Under_a_White_Stone",
-    "https://genshin-impact.fandom.com/wiki/Flowers_Resplendent_on_the_Sun-Scorched_Sojourn",
-    "https://genshin-impact.fandom.com/wiki/Kinich%27s_Deal",
-    "https://genshin-impact.fandom.com/wiki/Lingering_Warmth",
-    "https://genshin-impact.fandom.com/wiki/Homecoming",
-    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
-    "https://genshin-impact.fandom.com/wiki/Lupus_Aureus_Chapter",
-    "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
-    "https://genshin-impact.fandom.com/wiki/Oathkeeper",
-    "https://genshin-impact.fandom.com/wiki/King_Deshret_and_the_Three_Magi",
-    "https://genshin-impact.fandom.com/wiki/Dreams,_Emptiness,_Deception",
-    "https://genshin-impact.fandom.com/wiki/The_Morn_a_Thousand_Roses_Brings",
-    "https://genshin-impact.fandom.com/wiki/Through_Mists_of_Smoke_and_Forests_Dark",
-    "https://genshin-impact.fandom.com/wiki/Oathkeeper",
-    "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
-    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
-    "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
-    "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
+    # "https://genshin-impact.fandom.com/wiki/Black_Stone_Under_a_White_Stone",
+    # "https://genshin-impact.fandom.com/wiki/Flowers_Resplendent_on_the_Sun-Scorched_Sojourn",
+    # "https://genshin-impact.fandom.com/wiki/Kinich%27s_Deal",
+    # "https://genshin-impact.fandom.com/wiki/Lingering_Warmth",
+    # "https://genshin-impact.fandom.com/wiki/Homecoming",
+    # "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
+    # "https://genshin-impact.fandom.com/wiki/Lupus_Aureus_Chapter",
+    # "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
+    # "https://genshin-impact.fandom.com/wiki/Oathkeeper",
+    # "https://genshin-impact.fandom.com/wiki/King_Deshret_and_the_Three_Magi",
+    # "https://genshin-impact.fandom.com/wiki/Dreams,_Emptiness,_Deception",
+    # "https://genshin-impact.fandom.com/wiki/The_Morn_a_Thousand_Roses_Brings",
+    # "https://genshin-impact.fandom.com/wiki/Through_Mists_of_Smoke_and_Forests_Dark",
+    # "https://genshin-impact.fandom.com/wiki/Oathkeeper",
+    # "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
+    # "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
+    # "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
+    # "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
 ]
 
 
@@ -136,5 +136,9 @@ import pathlib
 import sys
 if sys.version_info.major == 3 and sys.version_info.minor <= 10:
     print("Python 3.10 detected, applying adaptions...")
+    # patch read_text
     pathlib.Path._real_read_text = pathlib.Path.read_text
     pathlib.Path.read_text = lambda self, encoding='utf-8', errors=None: self._real_read_text(encoding=encoding, errors=errors)
+    # patch write_text
+    pathlib.Path._real_write_text = pathlib.Path.write_text
+    pathlib.Path.write_text = lambda self, data, encoding='utf-8', errors=None: self._real_write_text(data=data, encoding=encoding, errors=errors)

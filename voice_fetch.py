@@ -84,5 +84,7 @@ def generate_text_list(colab_project_prefix: pathlib.Path = pathlib.Path(config.
             text = text.replace('\n', '')
             generated += f"{pathlib.Path(dest).name}|{char}|{config.muted_language}|{text}" + "\n"
         
-            with open(pathlib.Path(config.save_dest_for_downloaded_voice) / char / f"{char}.list", "w+") as f:
-                f.write(generated)
+            # with open(, "w+") as f:
+            #     f.write(generated)
+            pth: pathlib.Path = pathlib.Path(config.save_dest_for_downloaded_voice) / char / f"{char}.list"
+            pth.write_text(generated)

@@ -120,5 +120,6 @@ def dub_all():
                 "label": label
             }
             
-    with open(config.dub_result_manifest_dest, "w") as f:
-        f.write(serialize_collection(dub_result_manifest))
+    # with open(config.dub_result_manifest_dest, "w") as f:
+    #     f.write(serialize_collection(dub_result_manifest))
+    pathlib.Path(config.dub_result_manifest_dest).write_text(serialize_collection(dub_result_manifest))

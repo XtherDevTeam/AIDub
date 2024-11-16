@@ -6,10 +6,13 @@ from thirdparty.GPTSoViTs.tools.my_utils import clean_path, check_for_existance,
 from subprocess import Popen, PIPE
 import sys
 from thirdparty.GPTSoViTs.tools import my_utils
+import common
 import config
 
-SoVITS_weight_root=["GPTSoViTs/SoVITS_weights_v2","GPTSoViTs/SoVITS_weights"]
-GPT_weight_root=["GPTSoViTs/GPT_weights_v2","GPTSoViTs/GPT_weights"]
+SoVITS_weight_root=["SoVITS_weights_v2","SoVITS_weights"]
+GPT_weight_root=["GPT_weights_v2","GPT_weights"]
+pretrained_sovits_name=["GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth", "GPT_SoVITS/pretrained_models/s2G488k.pth"]
+pretrained_gpt_name=["GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt", "GPT_SoVITS/pretrained_models/s1bert25hz-2kh-longer-epoch=68e-step=50232.ckpt"]
 
 
 def gpu_numbers():
@@ -118,7 +121,7 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
                 "inp_text": inp_text,
                 "exp_name": exp_name,
                 "opt_dir": passing_opt_dir,
-                "pretrained_s2G": SoVITS_weight_root[-int("v2"[-1]) + 2], #版本写死v2
+                "pretrained_s2G": pretrained_sovits_name[-int("v2"[-1]) + 2], #版本写死v2
                 "s2config_path": "GPT_SoVITS/configs/s2.json",
                 "is_half": str(is_half),
             }
@@ -146,7 +149,7 @@ def preprocess_dataset(step: str, exp_name, inp_text, inp_wav_dir, gpu_numbers, 
         raise RuntimeError("不支持的预处理步骤")
     
 
-def train_s1(exp_name, gpu_numbers, batch_size=None, total_epoch=15, if_dpo=False, if_save_latest=True, if_save_every_weights=True, save_every_epoch=5, pretrained_s1=None, version="v2"):
+def train_s1(exp_name, gpu_numbers, batch_size=None, total_epoch=15, if_dpo=False, if_save_latest=True, if_save_every_weights=True, save_every_epoch=100, pretrained_s1=pretrained_gpt_name[-int('v2'[-1])+2], version="v2"):
     """
     预处理数据集并训练 S1 (GPT) 模型.
     Args:
@@ -159,17 +162,24 @@ def train_s1(exp_name, gpu_numbers, batch_size=None, total_epoch=15, if_dpo=Fals
         if_dpo (bool, optional): 是否使用 DPO 优化器. Defaults to False.
         if_save_latest (bool, optional): 是否保存最新模型. Defaults to True.
         if_save_every_weights (bool, optional): 是否保存每一个 epoch 的模型. Defaults to True.
-        save_every_epoch (int, optional): 保存模型的间隔 epoch 数. Defaults to 5.
-        pretrained_s1 (str, optional): 预训练 S1 模型路径. Defaults to None.
+        save_every_epoch (int, optional): 保存模型的间隔 epoch 数. Defaults to 100.
+        pretrained_s1 (str, optional): 预训练 S1 模型路径. Defaults to GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt.
         version (str, optional): 模型版本. Defaults to "v2".
     """
 
-    with open("GPT_SoVITS/configs/s1longer.yaml" if version == "v1" else "GPT_SoVITS/configs/s1longer-v2.yaml") as f:
+    if exp_name in common.get_available_model_path():
+        print(f"模型 {exp_name} 已存在，不需要训练")
+        return
+
+    with open("thirdparty/GPTSoViTs/GPT_SoVITS/configs/s1longer.yaml" if version == "v1" else "thirdparty/GPTSoViTs/GPT_SoVITS/configs/s1longer-v2.yaml") as f:
         data = yaml.safe_load(f)
 
     if is_half == False:
         data["train"]["precision"] = "32"
         batch_size = max(1, batch_size // 2) if batch_size is not None else None # 根据is_half调整batch_size
+    if batch_size is None:
+        print("batch_size未指定，使用默认值10")
+        batch_size = 10
 
     data["train"]["batch_size"] = batch_size # 传入参数
     data["train"]["epochs"] = total_epoch
@@ -187,19 +197,20 @@ def train_s1(exp_name, gpu_numbers, batch_size=None, total_epoch=15, if_dpo=Fals
     data["output_dir"] = os.path.join(passing_opt_dir, "logs_s1")
 
     tmp_config_path = os.path.join('thirdparty', 'GPTSoViTs', "TEMP", "tmp_s1.yaml")
+    passing_tmp_config_path = os.path.join("TEMP", "tmp_s1.yaml")
     with open(tmp_config_path, "w") as f:
         yaml.dump(data, f, default_flow_style=False)
 
     os.environ["_CUDA_VISIBLE_DEVICES"] = ",".join(gpu_numbers.split("-"))
     os.environ["hz"] = "25hz"
-    cmd = f'"{python_exec}" GPT_SoVITS/s1_train.py --config_file "{tmp_config_path}"'
+    cmd = f'"{python_exec}" GPT_SoVITS/s1_train.py --config_file "{passing_tmp_config_path}"'
     print("GPT训练开始：", cmd)
-    p = Popen(cmd, shell=True)
+    p = Popen(cmd, shell=True, stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno(), cwd="thirdparty/GPTSoViTs")
     p.wait()
     print("GPT训练完成")
 
 
-def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_rate=0.4, if_save_latest=True, if_save_every_weights=True, save_every_epoch=4, pretrained_s2G=None, pretrained_s2D=None, version="v2"):
+def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_rate=0.4, if_save_latest=True, if_save_every_weights=True, save_every_epoch=100, pretrained_s2G=pretrained_sovits_name[-int("v2"[-1]) + 2], pretrained_s2D=pretrained_sovits_name[-int("v2"[-1]) + 2].replace('s2G', 's2D'), version="v2"):
     """
     训练 S2 (SoVITS) 模型.
     Args:
@@ -211,13 +222,16 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
         if_save_latest (bool, optional): 是否保存最新模型. Defaults to True.
         if_save_every_weights (bool, optional): 是否保存每一个 epoch 的模型. Defaults to True.
         save_every_epoch (int, optional): 保存模型的间隔 epoch 数. Defaults to 4.
-        pretrained_s2G (str, optional): 预训练 S2G 模型路径. Defaults to None.
-        pretrained_s2D (str, optional): 预训练 S2D 模型路径. Defaults to None.
+        pretrained_s2G (str, optional): 预训练 S2G 模型路径. Defaults to GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth.
+        pretrained_s2D (str, optional): 预训练 S2D 模型路径. Defaults to GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2D2333k.pth.
         version (str, optional): 模型版本. Defaults to "v2".
     """
+    
+    if exp_name in common.get_available_model_path():
+        print(f"模型 {exp_name} 已存在，不需要训练")
+        return
 
-
-    with open("GPT_SoVITS/configs/s2.json") as f:
+    with open("thirdparty/GPTSoViTs/GPT_SoVITS/configs/s2.json") as f:
         data = json.load(f)
 
     s2_dir = os.path.join('thirdparty', 'GPTSoViTs', exp_root, exp_name)
@@ -230,6 +244,10 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
     if is_half == False:
         data["train"]["fp16_run"] = False
         batch_size = max(1, batch_size // 2) if batch_size is not None else None
+
+    if batch_size is None:
+        print("batch_size未指定，使用默认值10")
+        batch_size = 10
 
     data["train"]["batch_size"] = batch_size
     data["train"]["epochs"] = total_epoch
@@ -247,11 +265,12 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
     data["version"] = version
 
     tmp_config_path = os.path.join('thirdparty', 'GPTSoViTs', "TEMP", "tmp_s2.json")
+    passing_tmp_config_path = os.path.join( "TEMP", "tmp_s2.json")
     with open(tmp_config_path, "w") as f:
         json.dump(data, f)
 
-    cmd = f'"{python_exec}" GPT_SoVITS/s2_train.py --config "{tmp_config_path}"'
+    cmd = f'"{python_exec}" GPT_SoVITS/s2_train.py --config "{passing_tmp_config_path}"'
     print("SoVITS训练开始：", cmd)
-    p = Popen(cmd, shell=True)
+    p = Popen(cmd, shell=True, stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno(), cwd="thirdparty/GPTSoViTs")
     p.wait()
     print("SoVITS训练完成")

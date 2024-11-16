@@ -7,6 +7,7 @@ import dub
 import fandom
 import finetune
 import voice_fetch
+import pathlib
 from config import sources_to_fetch_voice, muted_characters, dataset_manifest_file_dest, source_text_to_dub, \
     dub_manifest_dest
 import emotion
@@ -29,9 +30,11 @@ def do_voice_collection():
     voice_fetch.reduce_collection(collections)
     voice_fetch.fetch_collection(collections)
 
-    with open(dataset_manifest_file_dest, 'w') as f:
-        f.write(voice_fetch.serialize_collection(collections))
+    # with open(dataset_manifest_file_dest, 'w') as f:
+    #     f.write(voice_fetch.serialize_collection(collections))
 
+    pathlib.Path(dataset_manifest_file_dest).write_text(voice_fetch.serialize_collection(collections))
+    
     voice_fetch.generate_text_list()
     
 
@@ -44,8 +47,9 @@ def do_subtitle_collection():
             collection = fandom.fetch_target_subtitles(quest, muted_characters)
             collections = fandom.merge_subtitle_collections([collections, collection])
 
-    with open(dub_manifest_dest, 'w') as f:
-        f.write(dub.serialize_collection(collections))
+    # with open(dub_manifest_dest, 'w') as f:
+    #     f.write(dub.serialize_collection(collections))
+    pathlib.Path(dub_manifest_dest).write_text(dub.serialize_collection(collections))
 
 def do_finetune():
     finetune.start()

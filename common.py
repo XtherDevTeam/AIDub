@@ -86,7 +86,7 @@ def check_if_audio_exceeds_10s(audio_path: str) -> bool:
     return (len(audio) / sr) > 9 or (len(audio) / sr) < 4
 
 
-def request_retry_wrapper(fetcher: typing.Callable, max_retries: int = 64):
+def request_retry_wrapper(fetcher: typing.Callable, max_retries: int = 128):
     for _ in range(max_retries):
         try:
             req = fetcher()
@@ -150,6 +150,11 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
     ]
     for i in model_paths:
         model_paths[i] = (str(model_paths[i][0]), str(model_paths[i][1]))
+    # exclude those not in muted_chars
+    muted_chars = get_muted_chars()
+    for i in list(model_paths.keys()):
+        if i not in muted_chars:
+            del model_paths[i]
         
     return model_paths
 

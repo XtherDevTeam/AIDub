@@ -67,8 +67,7 @@ def do_voice_collection():
     voice_fetch.reduce_collection(collections)
     voice_fetch.fetch_collection(collections)
 
-    with open(config.dataset_manifest_file_dest, 'w') as f:
-        f.write(voice_fetch.serialize_collection(collections))
+    pathlib.Path(config.dataset_manifest_file_dest).write_text(voice_fetch.serialize_collection(collections))
 
     voice_fetch.generate_text_list()
 
