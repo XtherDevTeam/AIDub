@@ -7,3 +7,4 @@ __pycache__
 .venv
 *.7z
 logs
+huggingface_cache

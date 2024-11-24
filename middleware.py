@@ -45,6 +45,12 @@ def run_gpt_sovits_server():
 
 app = flask.Flask(__name__)
 
+@app.before_request
+def before_request():
+    config.models_path = common.get_available_model_path()
+    config.muted_characters = common.get_muted_chars()
+    emotion.load_analysis_file()
+
 def makeResult(ok: bool = True, data: typing.Any = None) -> dict:
     return {
         'status': ok,
@@ -102,23 +108,34 @@ def emotion_classification():
 
 @app.route('/dub', methods=['POST', 'GET'])
 def dub_route():
-    if flask.request.method == 'POST':
+    if flask.request.method == 'POST' or flask.request.headers.get('Content-Type') == 'application/json':
         form = flask.request.json
         text = form['text']
         char_name = form['char_name']
+        ckpt, pth = dub.get_tts_models(char_name)
+        dub.setup_gpt_sovits_client(ckpt, pth)
         r = dub.dub_one(text, char_name, True)
-        resp = flask.make_response()
-        resp.headers['Content-Type'] = r.headers['Content-Type']
-        resp.data = r.iter_content(chunk_size=10*1024)
-        return resp
+        # resp = flask.make_response()
+        # resp.headers['Content-Type'] = r.headers['Content-Type']
+        # resp.data = r.iter_content(chunk_size=10*1024)
+        # return resp
+        headers = r.headers
+        headers['Content-Disposition'] = f'attachment; filename={char_name}.aac'
+        return flask.Response(r.iter_content(chunk_size=10*1024), headers=headers)
     else:
+        # check if body is application/json
         text = flask.request.args.get('text')
         char_name = flask.request.args.get('char_name')
+        ckpt, pth = dub.get_tts_models(char_name)
+        dub.setup_gpt_sovits_client(ckpt, pth)
         r = dub.dub_one(text, char_name, True)
-        resp = flask.make_response()
-        resp.headers['Content-Type'] = r.headers['Content-Type']
-        resp.data = r.iter_content(chunk_size=10*1024)
-        return resp
+        # resp = flask.make_response()
+        # resp.headers['Content-Type'] = r.headers['Content-Type']
+        # resp.data = r.iter_content(chunk_size=10*1024)
+        # return resp
+        headers = r.headers
+        headers['Content-Disposition'] = f'attachment; filename={char_name}.aac'
+        return flask.Response(r.iter_content(chunk_size=10*1024), headers=headers)
 
 
 @app.route('/gpt_sovits/dataset_preprocessing/get_text', methods=['POST'])
@@ -197,6 +214,4 @@ def info():
 
 if __name__ == '__main__':
     # dynamically load available models and muted characters, differ from the ones in config.py
-    config.models_path = common.get_available_model_path()
-    config.muted_characters = common.get_muted_chars()
     app.run(debug=False, host='192.168.1.7', port=2731)

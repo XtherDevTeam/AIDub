@@ -118,7 +118,7 @@ def match_once(image: np.ndarray):
     global played
     text = extract_text(image)
     for char in collections:
-        if char in text:
+        if common.extract_character_name(char)[0] in text:
             # there is a character name, means potential character subtitle, do full check
             similarities = [(check_similarity(text, collections[char][i]['text'], char), collections[char][i]['dest'], collections[char][i]['text']) for i in collections[char]]
             

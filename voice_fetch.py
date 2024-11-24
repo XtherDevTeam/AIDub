@@ -12,6 +12,10 @@ import fandom
 import json
 import threading
 
+
+
+
+
 def make_dirs():
     os.makedirs(config.save_dest_for_downloaded_voice, exist_ok=True)
 
@@ -69,7 +73,7 @@ def serialize_collection(collection: dict[str, list[tuple[str, str]]]) -> str:
 def reduce_collection(collection: dict[str, list[tuple[str, str]]]) -> dict[str, list[tuple[str, str]]]:
     for char in collection:
         # fetch 10 elements for each character
-        save_keys = [i for i in collection[char]][0:]
+        save_keys = [i for i in collection[char]][0:300]
         collection[char] = save_keys
         
     return collection
@@ -82,7 +86,7 @@ def generate_text_list(colab_project_prefix: pathlib.Path = pathlib.Path(config.
             text, dest = collection[char][i]['text'], collection[char][i]['dest']
             # vocal_path|speaker_name|language|text
             text = text.replace('\n', '')
-            generated += f"{pathlib.Path(dest).name}|{char}|{config.muted_language}|{text}" + "\n"
+            generated += f"{pathlib.Path(dest).name}|{char}|{common.extract_character_name(char)[1]}|{text}" + "\n"
         
             # with open(, "w+") as f:
             #     f.write(generated)

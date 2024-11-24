@@ -127,27 +127,26 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
     sovits_path = pathlib.Path('thirdparty/GPTSoViTs/SoVITS_weights_v2')
     model_paths = {}
     for ckpt, pth in zip(gpt_path.iterdir(), sovits_path.iterdir()):
-        if ckpt is not None:
-            # trunc from the first char to first - or _
-            model_name = re.sub(r'[^\w\d-]', '', ckpt.stem.split('-')[0])
-            # convert the first char to uppercase
-            model_name = model_name[0:1].upper() + model_name[1:]
-            val = model_paths.get(model_name, ["", ""])
-            val[0] = ckpt
-            model_paths[model_name] = val
-        if pth is not None:
-            # trunc from the first char to first _ or -
-            model_name = re.sub(r'[^\w\d_]', '', pth.stem.split('_')[0])
-            # convert the first char to uppercase
-            model_name = model_name[0:1].upper() + model_name[1:]
-            val = model_paths.get(model_name, ["", ""])
-            val[1] = pth
-            model_paths[model_name] = val
+        try:
+            if ckpt is not None:
+                # trunc from the first char including `(` `)` to first - or _
+                model_name = re.match(r"^(.*?)([-_])", ckpt.stem).group(1)
+                # convert the first char to uppercase
+                model_name = model_name[0:1].upper() + model_name[1:]
+                val = model_paths.get(model_name, ["", ""])
+                val[0] = ckpt
+                model_paths[model_name] = val
+            if pth is not None:
+                # trunc from the first char to first _ or -
+                model_name = re.match(r"^(.*?)([-_])", pth.stem).group(1)
+                # convert the first char to uppercase
+                model_name = model_name[0:1].upper() + model_name[1:]
+                val = model_paths.get(model_name, ["", ""])
+                val[1] = pth
+                model_paths[model_name] = val
+        except:
+            pass
     
-    model_paths['Default'] = [
-        "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
-        "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth"
-    ]
     for i in model_paths:
         model_paths[i] = (str(model_paths[i][0]), str(model_paths[i][1]))
     # exclude those not in muted_chars
@@ -159,8 +158,16 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
     return model_paths
 
 
+def get_default_model_path() -> tuple[str, str]:
+    return ("thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
+        "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth")
+
+
 def get_muted_chars() -> list[str]:
-    return [i for i in json.loads(pathlib.Path(config.sentiment_analysis_dest).read_text()).keys()]
+    try:
+        return [i for i in json.loads(pathlib.Path(config.sentiment_analysis_dest).read_text()).keys()]
+    except FileNotFoundError:
+        return []
 
 
 def extract_character_name(encoded_char_name: str) -> tuple[str, str]:
@@ -195,3 +202,10 @@ def encode_character_name(char_name: str, lang: str) -> str:
         str: The encoded character name.
     """
     return f'{char_name}({lang})'
+
+
+language_mapping = {
+    'Chinese': 'zh',
+    'English(US)': 'en',
+    'Japanese': 'jp'
+}

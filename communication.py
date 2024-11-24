@@ -184,7 +184,7 @@ def train_s1(exp_name, gpu_numbers, batch_size=None, total_epoch=15, if_dpo=Fals
     data["train"]["batch_size"] = batch_size # 传入参数
     data["train"]["epochs"] = total_epoch
     data["pretrained_s1"] = pretrained_s1
-    data["train"]["save_every_n_epoch"] = save_every_epoch
+    data["train"]["save_every_n_epoch"] = total_epoch if save_every_epoch == 100 else save_every_epoch
     data["train"]["if_save_every_weights"] = if_save_every_weights
     data["train"]["if_save_latest"] = if_save_latest
     data["train"]["if_dpo"] = if_dpo
@@ -221,7 +221,7 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
         text_low_lr_rate (float, optional): 文本低学习率. Defaults to 0.4.
         if_save_latest (bool, optional): 是否保存最新模型. Defaults to True.
         if_save_every_weights (bool, optional): 是否保存每一个 epoch 的模型. Defaults to True.
-        save_every_epoch (int, optional): 保存模型的间隔 epoch 数. Defaults to 4.
+        save_every_epoch (int, optional): 保存模型的间隔 epoch 数. Defaults to 100.
         pretrained_s2G (str, optional): 预训练 S2G 模型路径. Defaults to GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth.
         pretrained_s2D (str, optional): 预训练 S2D 模型路径. Defaults to GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2D2333k.pth.
         version (str, optional): 模型版本. Defaults to "v2".
@@ -256,7 +256,7 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
     data["train"]["pretrained_s2D"] = pretrained_s2D
     data["train"]["if_save_latest"] = if_save_latest
     data["train"]["if_save_every_weights"] = if_save_every_weights
-    data["train"]["save_every_epoch"] = save_every_epoch
+    data["train"]["save_every_epoch"] = total_epoch if save_every_epoch == 100 else save_every_epoch
     data["train"]["gpu_numbers"] = gpu_numbers  # 这里不需要分割
     data["model"]["version"] = version
     data["data"]["exp_dir"] = data["s2_ckpt_dir"] = passing_s2_dir

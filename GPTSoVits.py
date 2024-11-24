@@ -56,7 +56,7 @@ class GPTSoVitsAPI():
         if a.status_code == 200 and b.status_code == 200:
             common.log('Successfully set models for v3 API')
         else:
-            common.panic('Failed to set models for v3 API')
+            common.panic(f'Failed to set models for v3 API: {a.content} {b.content}')
 
 
     # text to speech function for v1 API
@@ -133,7 +133,7 @@ class GPTSoVitsAPI():
             "media_type": "aac",
             "streaming_mode": True,
             "parallel_infer": False
-        }, stream=True)
+        }, stream=streamed)
 
     def tts(self, ref_audio: str, ref_text: str, text: str, ref_language: str = 'auto', text_language: str = 'auto', streamed: bool = False) -> requests.Response:
         """
