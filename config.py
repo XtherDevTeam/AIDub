@@ -11,6 +11,10 @@ muted_characters = [
     # "Alhaitham",
     # "Nilou",
     # "Faruzan"
+    # "Kinich",
+    # "Yoimiya",
+    # "Yoimiya(zh)",
+    # "Xilonen"
 ]
 
 
@@ -18,6 +22,7 @@ ignored_characters = [
     "???",
     "Crowd",
     "Everyone",
+    "(TravelerTravelerThe player's chosen name for the Traveler)"
 ]
 
 
@@ -77,36 +82,32 @@ models_path = {
 
 # sources to fetch voice
 sources_to_fetch_voice = [
-    # "https://genshin-impact.fandom.com/wiki/Black_Stone_Under_a_White_Stone",
-    # "https://genshin-impact.fandom.com/wiki/Flowers_Resplendent_on_the_Sun-Scorched_Sojourn",
-    # "https://genshin-impact.fandom.com/wiki/Kinich%27s_Deal",
-    # "https://genshin-impact.fandom.com/wiki/Lingering_Warmth",
-    # "https://genshin-impact.fandom.com/wiki/Homecoming",
-    # "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
-    # "https://genshin-impact.fandom.com/wiki/Lupus_Aureus_Chapter",
-    # "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
-    # "https://genshin-impact.fandom.com/wiki/Oathkeeper",
-    # "https://genshin-impact.fandom.com/wiki/King_Deshret_and_the_Three_Magi",
-    # "https://genshin-impact.fandom.com/wiki/Dreams,_Emptiness,_Deception",
-    # "https://genshin-impact.fandom.com/wiki/The_Morn_a_Thousand_Roses_Brings",
-    # "https://genshin-impact.fandom.com/wiki/Through_Mists_of_Smoke_and_Forests_Dark",
-    # "https://genshin-impact.fandom.com/wiki/Oathkeeper",
-    # "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
-    # "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
-    # "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
-    # "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
-    "custom:huggingface:foobar"
+    "https://genshin-impact.fandom.com/wiki/Black_Stone_Under_a_White_Stone",
+    "https://genshin-impact.fandom.com/wiki/Flowers_Resplendent_on_the_Sun-Scorched_Sojourn",
+    "https://genshin-impact.fandom.com/wiki/Kinich%27s_Deal",
+    "https://genshin-impact.fandom.com/wiki/Lingering_Warmth",
+    "https://genshin-impact.fandom.com/wiki/Homecoming",
+    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
+    "https://genshin-impact.fandom.com/wiki/Lupus_Aureus_Chapter",
+    "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
+    "https://genshin-impact.fandom.com/wiki/Oathkeeper",
+    "https://genshin-impact.fandom.com/wiki/King_Deshret_and_the_Three_Magi",
+    "https://genshin-impact.fandom.com/wiki/Dreams,_Emptiness,_Deception",
+    "https://genshin-impact.fandom.com/wiki/The_Morn_a_Thousand_Roses_Brings",
+    "https://genshin-impact.fandom.com/wiki/Through_Mists_of_Smoke_and_Forests_Dark",
+    "https://genshin-impact.fandom.com/wiki/Oathkeeper",
+    "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
+    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
+    "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
+    "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
+    # "custom:huggingface:foobar"
 ]
 
 
 # text to dub
 # add "quest:" before the quest page which contains the dialogue part
 source_text_to_dub = [
-    "https://genshin-impact.fandom.com/wiki/Beyond_the_Smoke_and_Mirrors",
-    "https://genshin-impact.fandom.com/wiki/The_Rainbow_Destined_to_Burn",
-    "quest:https://genshin-impact.fandom.com/wiki/Give_Her_Surprises",
-    "quest:https://genshin-impact.fandom.com/wiki/Give_Her_Sweetness",
-    "quest:https://genshin-impact.fandom.com/wiki/Give_Her_Memories"
+    "quest:https://genshin-impact.fandom.com/wiki/For_the_Same_Land"
 ]
 
 necessary_replacements = {

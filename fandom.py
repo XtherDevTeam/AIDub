@@ -1,4 +1,5 @@
 # fandom.com operations related
+import av
 import time
 import urllib
 import config
@@ -236,7 +237,9 @@ def find_potentially_missing_voice_over_chars(page_url: str, target_va: list[str
     Returns:
     
     """
+    import threading
     result = []
+    threads = []
 
     req = common.request_retry_wrapper(lambda: requests.get(page_url))
     req.encoding = "utf-8"
@@ -256,10 +259,35 @@ def find_potentially_missing_voice_over_chars(page_url: str, target_va: list[str
                 continue
 
             char = bLabel.text[0:-1]
-
-            if char not in target_va and i.text.strip().startswith(f'{char}:') and char not in config.ignored_characters and '&' not in char:
+            # print(f"Checking character {char}", i.text.strip())
+            if char not in target_va and f"{char}:" in i.text.strip() and char not in config.ignored_characters and '&' not in char:
                 if i.find('span') is None:
                     common.log(f"Possible missing character {char} voiceline: {i.text}")
                     result.append(char)
+                else:
+                    # check if voice is usable
+                    x = i.find('span')
+                    if x.find('a') is None:
+                        common.log(f"Possible missing character {char} voiceline: {i.text}")
+                        result.append(char)
+                    else:
+                        def func():
+                            try:
+                                src = x.find('a').attrs['href']
+                                audio = av.open(src)
+                                if audio.duration < 1:
+                                    common.log(f"Possible missing character {char} voiceline: {i.text}")
+                                audio.close()
+                                result.append(char)
+                            except:
+                                common.log(f"Failed to load {src} for character {char}")
+                                result.append(char)
+                        threads.append(threading.Thread(target=func))
+
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
 
     return [i for i in set(result)]

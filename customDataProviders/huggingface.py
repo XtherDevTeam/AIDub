@@ -81,8 +81,6 @@ def get_specific_speaker_language(data, speakers):
         alternative_if_en = speaker_with_lang[:-4] if speaker_with_lang.endswith('(en)') else 'N/A'
         if speaker_with_lang in speakers or alternative_if_en in speakers:
             final_choice = speaker_with_lang if alternative_if_en is 'N/A' else alternative_if_en
-            if final_choice == i['speaker']:
-                print(final_choice, speaker_with_lang, alternative_if_en, speakers)
             
             if r.get(final_choice) is None:
                 r[final_choice] = []

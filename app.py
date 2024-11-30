@@ -65,7 +65,7 @@ def find_missing_voices():
     result = []
     for i in source_text_to_dub:
         quests = [i[i.index(':')+1:]] if i.startswith('quest:') else fandom.fetch_quest_entries(i)
-
+        common.log(f'Checking for missing voices in {quests}')
         for quest in quests:
             r = fandom.find_potentially_missing_voice_over_chars(quest, muted_characters)
             result.extend(r)

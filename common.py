@@ -27,6 +27,8 @@ processes : list[threading.Thread] = []
 
 cache = {}
 
+missing = []
+
 
 def cleanup_processes():
     global processes
@@ -153,7 +155,10 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
     muted_chars = get_muted_chars()
     for i in list(model_paths.keys()):
         if i not in muted_chars:
+            global missing
+            log(f"Model {i} is not in muted_chars, please add it to the config.")
             del model_paths[i]
+            missing.append(i)
         
     return model_paths
 
@@ -165,7 +170,9 @@ def get_default_model_path() -> tuple[str, str]:
 
 def get_muted_chars() -> list[str]:
     try:
-        return [i for i in json.loads(pathlib.Path(config.sentiment_analysis_dest).read_text()).keys()]
+        s1 = [i for i in json.loads(pathlib.Path(config.sentiment_analysis_dest).read_text()).keys()]
+        s2 = missing
+        return [i for i in set(s1 + s2)]
     except FileNotFoundError:
         return []
 

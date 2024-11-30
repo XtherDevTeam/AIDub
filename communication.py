@@ -167,7 +167,7 @@ def train_s1(exp_name, gpu_numbers, batch_size=None, total_epoch=15, if_dpo=Fals
         version (str, optional): 模型版本. Defaults to "v2".
     """
 
-    if exp_name in common.get_available_model_path():
+    if exp_name in common.get_available_model_path()  and common.get_available_model_path()[exp_name][0] != "":
         print(f"模型 {exp_name} 已存在，不需要训练")
         return
 
@@ -227,7 +227,7 @@ def train_s2(exp_name, gpu_numbers, batch_size=None, total_epoch=8, text_low_lr_
         version (str, optional): 模型版本. Defaults to "v2".
     """
     
-    if exp_name in common.get_available_model_path():
+    if exp_name in common.get_available_model_path() and common.get_available_model_path()[exp_name][1] != "":
         print(f"模型 {exp_name} 已存在，不需要训练")
         return
 
