@@ -7,4 +7,5 @@ __pycache__
 .venv
 *.7z
 logs
-huggingface_cache
+genshin_huggingface_cache
+hsr_huggingface_cache

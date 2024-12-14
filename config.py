@@ -100,7 +100,8 @@ sources_to_fetch_voice = [
     "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
     "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
     "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
-    # "custom:huggingface:foobar"
+    "custom:genshin_huggingface:foobar",
+    "custom:hsr_huggingface:foobar"
 ]
 
 
@@ -130,9 +131,6 @@ screenshot_dest = f"{save_dest_root}/screenshot.png"
 logs_dest = f"{save_dest_root}/logs"
 gpt_model_path = "thirdparty/GPTSoViTs/GPT_weights_v2"
 sovits_model_path = "thirdparty/GPTSoViTs/SoVITS_weights_v2"
-
-# fish speech configuration
-fish_speech_module_path = "thirdparty/fish" # deprecated
 
 # Python 3.10 adaption
 import pathlib

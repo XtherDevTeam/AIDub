@@ -25,7 +25,7 @@ def download_task_wrapper(char: str, text: str, url: str):
         if out.exists():
             return
         # fake our ua
-        r = requests.get(url, allow_redirects=True, stream=True, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'})
+        r = requests.get(url, allow_redirects=True, stream=False, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'})
         with open(out, 'wb+') as file:
             total = int(r.headers.get('content-length'))
             for i in clint.textui.progress.bar(r.iter_content(chunk_size=2391975), expected_size=(total / 1024) + 1):
@@ -42,6 +42,7 @@ def dispatch_download_task(char: str, text: str, url: str):
 def fetch_collection(collection: dict[str, list[tuple[str, str]]]):
     make_dirs()
     for char in collection:
+        ths: list[threading.Thread] = []
         os.makedirs(pathlib.Path(config.save_dest_for_downloaded_voice) / char, exist_ok=True)
         # seperate 8 list with same counts of elements
         def split_list(lst, n):
@@ -53,7 +54,11 @@ def fetch_collection(collection: dict[str, list[tuple[str, str]]]):
                 text, url = voice
                 dispatch_download_task(char, text, url)
         for i in x:
-            threading.Thread(target=dispatcher, args=(i,)).start()
+            ths.append(threading.Thread(target=dispatcher, args=(i,)))
+        for i in ths:
+            i.start()
+        for i in ths:
+            i.join()
 
 
 
@@ -71,10 +76,21 @@ def serialize_collection(collection: dict[str, list[tuple[str, str]]]) -> str:
     return json.dumps(result, ensure_ascii=False)
 
 def reduce_collection(collection: dict[str, list[tuple[str, str]]]) -> dict[str, list[tuple[str, str]]]:
+    not_enough_data = []
+    former = json.loads(pathlib.Path(config.dataset_manifest_file_dest).read_text())
     for char in collection:
         # fetch 10 elements for each character
         save_keys = [i for i in collection[char]][0:300]
         collection[char] = save_keys
+        if len(collection[char]) < 10:
+            not_enough_data.append(char)
+    for i in not_enough_data:
+        if former.get(i) is not None:
+            common.log(f"Using existing data for {i}, ")
+            collection[i] = former[i]
+        else:
+            common.log(f"Not enough data for {i}, removing from collection")
+            del collection[i]
         
     return collection
     

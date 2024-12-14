@@ -130,6 +130,10 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
                 if collection.get(char) is None:
                     collection[char] = []
                 collection[char].append((text, src))
+                
+        # workaround for hsr wiki
+        # find all span with no-audio
+        noVoiceLabels = dialoguePart.find_all("")
 
     return collection
 

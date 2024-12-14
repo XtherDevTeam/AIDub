@@ -170,7 +170,7 @@ def get_default_model_path() -> tuple[str, str]:
 
 def get_muted_chars() -> list[str]:
     try:
-        s1 = [i for i in json.loads(pathlib.Path(config.sentiment_analysis_dest).read_text()).keys()]
+        s1 = [i for i in json.loads(pathlib.Path(config.dataset_manifest_file_dest).read_text()).keys()]
         s2 = missing
         return [i for i in set(s1 + s2)]
     except FileNotFoundError:

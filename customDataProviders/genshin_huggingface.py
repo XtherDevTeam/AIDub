@@ -8,13 +8,16 @@ import time
 import common
 import pathlib
 
+original_postfix = None # "?Expires=xxxxx&OSSAccessKeyId=xxxxx&Signature=xxxxx"
+fixed_speedup_postfix = None # "?Expires=xxxxx&OSSAccessKeyId=xxxxx&Signature=xxxxx"
 # lanuage to use
 language = ['Chinese', 'English(US)', 'Japanese', 'Korean']
 language_rep = ['zh', 'en', 'jp', 'ko']
 language_mapping = {
     'Chinese': 'zh',
     'English(US)': 'en',
-    'Japanese': 'jp'
+    'Japanese': 'jp',
+    'Korean': 'ko'
 }
 
 src = "https://datasets-server.huggingface.co/rows?dataset=simon3000%2Fgenshin-voice&config=default&split=train"
@@ -54,7 +57,7 @@ def get_chunk_size(chunk_pos):
 
 def get_data(offset, length):
     global src
-    cache = pathlib.Path('./huggingface_cache') / f'cache_{offset}.json'
+    cache = pathlib.Path('./genshin_huggingface_cache') / f'cache_{offset}.json'
     cache.parent.mkdir(exist_ok=True, parents=True)
     if cache.exists() and cache.stat().st_mtime > time.time() - 7 * 24 * 60 * 60: # cache for 24 hours
         try:
@@ -90,6 +93,10 @@ def get_specific_speaker_language(data, speakers):
                 i['transcription'] = i['transcription'].replace(k, v)
             for k, v in replace_dict_en.items():
                 i['transcription'] = i['transcription'].replace(k, v)
+                
+            if '{' in i['transcription']:
+                common.log(f"Unreplaced tags in {i['speaker']}: {i['transcription']}, skipping...")
+                continue
             
             # text, src
             r[final_choice].append((i['transcription'], i['audio'][0]['src']))
@@ -117,7 +124,7 @@ def merge_voice_collections(collections: list[dict[str, list[tuple[str, str]]]])
 
 def traverse_api(speakers, chunk):
     chunk_pos, chunk_size = get_chunk_size(chunk)
-    print(chunk_pos, chunk_size)
+    # print(chunk_pos, chunk_size)
     r = {}
     offset = 0
     length = 100
@@ -131,7 +138,7 @@ def traverse_api(speakers, chunk):
                     raw_data, speakers)
                 break
             except Exception as e:
-                print(raw_data)
+                # print(raw_data)
                 time.sleep(1 / random.randint(1, 10))
                 
         r = merge_voice_collections([r, collection])
