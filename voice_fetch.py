@@ -12,20 +12,19 @@ import fandom
 import json
 import threading
 
-
-
-
-
 def make_dirs():
     os.makedirs(config.save_dest_for_downloaded_voice, exist_ok=True)
 
 def download_task_wrapper(char: str, text: str, url: str):
     def download_task():
         out = pathlib.Path(config.save_dest_for_downloaded_voice) / char / f"{common.md5(text)}.mp3"
-        if out.exists():
+        if out.exists() and not out.read_bytes().startswith(b"<?xml"):
             return
         # fake our ua
         r = requests.get(url, allow_redirects=True, stream=False, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'})
+        if r.status_code != 200:
+            common.log(f"Failed to download {url} for {char} with status code {r.status_code}")
+            raise Exception("Failed to download")
         with open(out, 'wb+') as file:
             total = int(r.headers.get('content-length'))
             for i in clint.textui.progress.bar(r.iter_content(chunk_size=2391975), expected_size=(total / 1024) + 1):

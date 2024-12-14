@@ -59,7 +59,7 @@ def get_data(offset, length):
     global src
     cache = pathlib.Path('./genshin_huggingface_cache') / f'cache_{offset}.json'
     cache.parent.mkdir(exist_ok=True, parents=True)
-    if cache.exists() and cache.stat().st_mtime > time.time() - 7 * 24 * 60 * 60: # cache for 24 hours
+    if cache.exists() and cache.stat().st_mtime > time.time() - 1 * 60 * 60: # cache for 24 hours
         try:
             data = json.loads(cache.read_text())
             if data.get('error') is None:

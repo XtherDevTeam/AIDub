@@ -99,7 +99,7 @@ sources_to_fetch_voice = [
     "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
     "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
     "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
-    "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob"
+    "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob",
     "custom:genshin_huggingface:foobar",
     "custom:hsr_huggingface:foobar"
 ]

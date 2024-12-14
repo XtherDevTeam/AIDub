@@ -48,7 +48,6 @@ def do_subtitle_collection():
     collections: dict[str, list[str]] = {}
     for i in source_text_to_dub:
         quests = [i[i.index(':')+1:]] if i.startswith('quest:') else fandom.fetch_quest_entries(i)
-
         for quest in quests:
             collection = fandom.fetch_target_subtitles(quest, muted_characters)
             collections = fandom.merge_subtitle_collections([collections, collection])
@@ -84,8 +83,16 @@ if __name__ == '__main__':
     parser.add_argument('--emotion-classification', action='store_true', help='Pre-process the audio files and generate emotion analsysis configuration for dubbing')
     parser.add_argument('--dataset-overview', action='store_true', help='Check the dataset overview')
     parser.add_argument('--missing-voices', action='store_true', help='Find potentially missing voices for the subtitles')
+    parser.add_argument('--use-middleware-logic', action='store_true', help='Use middleware logic for initializing muted characters and model paths')
     args = parser.parse_args()
-
+    global models_path
+    global muted_characters
+    
+    if args.use_middleware_logic:
+        models_path = common.get_available_model_path()
+        muted_characters = common.get_muted_chars()
+        common.log(f'Using middleware logic for models path: {models_path} and muted characters: {muted_characters}')
+    
     if args.voice:
         do_voice_collection()
     elif args.subtitle:

@@ -59,7 +59,6 @@ def makeResult(ok: bool = True, data: typing.Any = None) -> dict:
 
 def do_voice_collection():
     collections: dict[str, list[tuple[str, str]]] = {}
-    
     for i in config.sources_to_fetch_voice:
         if i.startswith('custom:'):
             providerName = i[7:i.index(':', 7)]
@@ -74,11 +73,10 @@ def do_voice_collection():
                 collection = fandom.fetch_target_vo_from_quest_page(quest, config.muted_characters)
 
                 collections = fandom.merge_voice_collections([collections, collection])
-
+                
     # download voices
     voice_fetch.reduce_collection(collections)
     voice_fetch.fetch_collection(collections)
-
     pathlib.Path(config.dataset_manifest_file_dest).write_text(voice_fetch.serialize_collection(collections))
 
     voice_fetch.generate_text_list()

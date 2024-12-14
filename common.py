@@ -152,13 +152,16 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
     for i in model_paths:
         model_paths[i] = (str(model_paths[i][0]), str(model_paths[i][1]))
     # exclude those not in muted_chars
+    global missing
     muted_chars = get_muted_chars()
+    
     for i in list(model_paths.keys()):
         if i not in muted_chars:
-            global missing
             log(f"Model {i} is not in muted_chars, please add it to the config.")
             del model_paths[i]
             missing.append(i)
+    
+    missing = list(set(missing))
         
     return model_paths
 

@@ -32,6 +32,7 @@ def fetch_quest_entries_from_chapter_page(page_url: str) -> list[str]:
             label = li.find("a")
             if label:
                 real_url = urllib.parse.urljoin(page_url, label.get("href"))
+                common.log(f"Found quest entry: {real_url}")
                 collection.append(real_url)
     return collection
 
@@ -98,6 +99,7 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     dialogueParts = document.find_all('div', {'class': 'dialogue'})
+    common.log(f"Found {len(dialogueParts)} dialogue parts for {page_url}")
     if dialogueParts is None:
         common.log(f"unexpected dialogue part: {page_url}")
         return collection
@@ -131,29 +133,29 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
                     collection[char] = []
                 collection[char].append((text, src))
                 
-    # workaround for hsr wiki
-    # find all span with Play
-    playableVoiceLines = dialoguePart.find_all("span", {"title": "Play"})
-    for i in playableVoiceLines:
-        i.parent #dd label
-        char = i.parent.find('b').text[0:-1]
-        text = i.parent.get_text()
-        text = text[text.find(f'{char}: ') + len(f'{char}: '):]
-        
-        for i in config.necessary_replacements:
-            common.log(f"Replacing {i} with {config.necessary_replacements[i]} in text: {text}")
-            text = text.replace(i, config.necessary_replacements[i])
+        # workaround for hsr wiki
+        # find all span with Play
+        playableVoiceLines = dialoguePart.find_all("span", {"title": "Play"})
+        for i in playableVoiceLines:
+            i.parent #dd label
+            char = i.parent.find('b').text[0:-1]
+            text = i.parent.get_text()
+            text = text[text.find(f'{char}: ') + len(f'{char}: '):]
             
-        aLabel = i.find('a')
-        if aLabel is None:
-            common.log(f"No vocal file found for character: {char} in text: {i.text}")
-            continue
-        src = aLabel.attrs['href']
-        if char in target_va:
-            common.log(f"Found character {char} subtitle: {text}")
-            if collection.get(char) is None:
-                collection[char] = []
-            collection[char].append((text, src))
+            for i in config.necessary_replacements:
+                common.log(f"Replacing {i} with {config.necessary_replacements[i]} in text: {text}")
+                text = text.replace(i, config.necessary_replacements[i])
+                
+            aLabel = i.find('a')
+            if aLabel is None:
+                common.log(f"No vocal file found for character: {char} in text: {i.text}")
+                continue
+            src = aLabel.attrs['href']
+            if char in target_va:
+                common.log(f"Found character {char} subtitle: {text}")
+                if collection.get(char) is None:
+                    collection[char] = []
+                collection[char].append((text, src))
 
     return collection
 
@@ -193,7 +195,7 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     dialogueParts = document.find_all('div', {'class': 'dialogue'})
-    
+    common.log(f"Found {len(dialogueParts)} dialogue parts for target VA {target_va} in {page_url}")
     if dialogueParts is None:
         common.log(f"unexpected dialogue part: {page_url}")
         return collection
@@ -224,20 +226,6 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
                 # get text after `char:`
                 text = i.text
                 text = text[text.find(f'{char}: ') + len(f'{char}: '):]
-                common.log(f"Found character {char} subtitle: {text}")
-                if collection.get(char) is None:
-                    collection[char] = []
-                collection[char].append(text)
-
-        # workaround for hsr wiki
-        # find all span with no-audio
-        noVoiceLabels = dialoguePart.find_all("span", {"title": "Invalid or missing audio file"})
-        for i in noVoiceLabels:
-            i.parent #dd label
-            char = i.parent.find('b').text[0:-1]
-            text = i.parent.get_text()
-            text = text[text.find(f'{char}: ') + len(f'{char}: '):]
-            if char in target_va:
                 common.log(f"Found character {char} subtitle: {text}")
                 if collection.get(char) is None:
                     collection[char] = []
