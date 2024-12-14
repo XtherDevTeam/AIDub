@@ -83,16 +83,18 @@ def get_specific_speaker_language(data, speakers):
         speaker_with_lang = common.encode_character_name(i['speaker'], language_mapping.get(i['language'], 'N/A'))
         alternative_if_en = speaker_with_lang[:-4] if speaker_with_lang.endswith('(en)') else 'N/A'
         if speaker_with_lang in speakers or alternative_if_en in speakers:
-            final_choice = speaker_with_lang if alternative_if_en is 'N/A' else alternative_if_en
+            final_choice = speaker_with_lang if alternative_if_en == 'N/A' else alternative_if_en
             
             if r.get(final_choice) is None:
                 r[final_choice] = []
             
             # remove annoying tags
-            for k, v in replace_dict_cn.items():
-                i['transcription'] = i['transcription'].replace(k, v)
-            for k, v in replace_dict_en.items():
-                i['transcription'] = i['transcription'].replace(k, v)
+            if i['language'] == 'Chinese':
+                for k, v in replace_dict_cn.items():
+                    i['transcription'] = i['transcription'].replace(k, v)
+            elif i['language'] == 'English(US)':
+                for k, v in replace_dict_en.items():
+                    i['transcription'] = i['transcription'].replace(k, v)
                 
             if '{' in i['transcription']:
                 common.log(f"Unreplaced tags in {i['speaker']}: {i['transcription']}, skipping...")

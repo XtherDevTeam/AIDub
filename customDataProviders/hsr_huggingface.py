@@ -88,10 +88,12 @@ def get_specific_speaker_language(data, speakers):
                 r[final_choice] = []
             
             # remove annoying tags
-            for k, v in replace_dict_cn.items():
-                i['transcription'] = i['transcription'].replace(k, v)
-            for k, v in replace_dict_en.items():
-                i['transcription'] = i['transcription'].replace(k, v)
+            if i['language'] == 'Chinese(PRC)':
+                for k, v in replace_dict_cn.items():
+                    i['transcription'] = i['transcription'].replace(k, v)
+            elif i['language'] == 'English':
+                for k, v in replace_dict_en.items():
+                    i['transcription'] = i['transcription'].replace(k, v)
                 
             if '{' in i['transcription']:
                 common.log(f"Unreplaced tags in {i['speaker']}: {i['transcription']}, skipping...")

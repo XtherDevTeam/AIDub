@@ -108,7 +108,8 @@ sources_to_fetch_voice = [
 # text to dub
 # add "quest:" before the quest page which contains the dialogue part
 source_text_to_dub = [
-    "quest:https://genshin-impact.fandom.com/wiki/For_the_Same_Land"
+    "quest:https://genshin-impact.fandom.com/wiki/For_the_Same_Land",
+    "https://honkai-star-rail.fandom.com/wiki/A_New_Venture_on_the_Eighth_Dawn"
 ]
 
 necessary_replacements = {
