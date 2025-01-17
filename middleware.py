@@ -150,6 +150,9 @@ def get_text():
 @app.route('/gpt_sovits/dataset_preprocessing/get_hubert_wav32k', methods=['POST'])
 def get_hubert_wav32k():
     for char in config.muted_characters:
+        # check if model exists
+        if char in config.models_path:
+            continue
         try:
             dest = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}")
             list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}/{char}.list")
@@ -161,6 +164,8 @@ def get_hubert_wav32k():
 @app.route('/gpt_sovits/dataset_preprocessing/name_to_semantic', methods=['POST'])
 def name_to_semantic():
     for char in config.muted_characters:
+        if char in config.models_path:
+            continue
         try:
             dest = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}")
             list = pathlib.Path(f"{config.save_dest_for_downloaded_voice}/{char}/{char}.list")
@@ -177,7 +182,7 @@ def train_model_gpt():
     total_epoch = form.get('total_epoch', 15)
     for char in config.muted_characters:
         try:
-            if char in config.models_path:
+            if char in config.models_path and config.models_path[char][0] != "":
                 continue
             communication.train_s1(char, "0", batch_size=batch_size, total_epoch=total_epoch)
         except Exception as e:
@@ -192,7 +197,7 @@ def train_model_sovits():
     total_epoch = form.get('total_epoch', 15)
     for char in config.muted_characters:
         try:
-            if char in config.models_path:
+            if char in config.models_path and config.models_path[char][1] != "":
                 continue
             communication.train_s2(char, "0", batch_size=batch_size, total_epoch=total_epoch)
         except Exception as e:

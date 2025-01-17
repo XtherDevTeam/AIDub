@@ -101,15 +101,15 @@ sources_to_fetch_voice = [
     "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
     "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob",
     "custom:genshin_huggingface:foobar",
-    "custom:hsr_huggingface:foobar"
+    # "custom:hsr_huggingface:foobar"
 ]
 
 
 # text to dub
 # add "quest:" before the quest page which contains the dialogue part
 source_text_to_dub = [
-    "quest:https://genshin-impact.fandom.com/wiki/For_the_Same_Land",
-    "https://honkai-star-rail.fandom.com/wiki/A_New_Venture_on_the_Eighth_Dawn"
+    "https://genshin-impact.fandom.com/wiki/Incandescent_Ode_of_Resurrection",
+    "https://genshin-impact.fandom.com/wiki/All_Fires_Fuel_the_Flame"
 ]
 
 necessary_replacements = {

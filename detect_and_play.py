@@ -18,6 +18,13 @@ from paddleocr import PaddleOCR, draw_ocr
 import common
 import fuzzywuzzy
 import nltk
+import middleware_api
+
+dnp_config = {
+    "enable_realtime_dubbing": False,
+    "middleware_server": "http://192.168.1.7:2731"
+}
+last_text = ''
 
 # Paddleocr目前支持的多语言语种可以通过修改lang参数进行切换
 # 例如`ch`, `en`, `fr`, `german`, `korean`, `japan`
@@ -64,7 +71,7 @@ def extract_text_from_ocr_result(ocr_result):
         for item in page:
              extracted_texts.append(item[1][0])
 
-    return "".join(extracted_texts)
+    return " ".join(extracted_texts)
     
 def extract_text(image: np.ndarray):
     ocr_result = ocr.ocr(image, cls=True)
@@ -91,7 +98,25 @@ def check_similarity(text1, ori_text, char):
         return (pylcs_result + similarity, len(ori_text), True, pylcs_result, text1, ori_text)
     
     return (0, len(ori_text), False, 0, text1, ori_text) # no similarity, return 0
-    
+
+
+def realtime_text_extraction(text1: str, char: str):
+    rightpos = text1.lower().find(f"uid")
+    if rightpos == -1:
+        rightpos = len(text1)
+    leftpos = text1.lower().find(f"{char.lower()}")
+    if leftpos == -1:
+        leftpos = 0
+    text1 = text1.lower()[leftpos + len(char) + 1:rightpos].strip()
+    return text1
+
+
+def realtime_play(text: str, char: str):
+    import io
+    api = middleware_api.AIDubMiddlewareAPI(dnp_config["middleware_server"])
+    sound = pydub.AudioSegment.from_file(io.BytesIO(api.dub(text, char).content), "aac")
+    sound = trim_leading_silence(sound)  # remove leading silence
+    pydub.playback.play(sound)  #play sound
 
 
 def play(dest: str):
@@ -116,6 +141,7 @@ def update_played(text):
 
 def match_once(image: np.ndarray):
     global played
+    global last_text
     text = extract_text(image)
     for char in collections:
         if common.extract_character_name(char)[0] in text:
@@ -124,15 +150,25 @@ def match_once(image: np.ndarray):
             
             similarities.sort(reverse=True, key=lambda x: x[0][0])
             ori_text = similarities[0][2]
-            
-            common.log(similarities[0:5])
+            text_to_dub = realtime_text_extraction(text, char)
             # if (similarities[0][0][0] > 0.5 and similarities[0][0][1] > 30) or (similarities[0][0][0] > 0.7 and similarities[0][0][1] <= 30) or played.get(ori_text, True):
             # check if matched
             if similarities[0][0][2] and not check_if_played(ori_text):
+                common.log(similarities[0:1])
                 common.log(f"Found subtitle {ori_text} for character {char}, similarity {similarities[0][0][0]}, playing {similarities[0][1]}")
                 play(similarities[0][1])
                 update_played(ori_text)
                 return True
+            elif not check_if_played(text_to_dub) and dnp_config["enable_realtime_dubbing"]:
+                if last_text == "" or last_text.strip() != text_to_dub.strip():
+                    common.log(f"Text changed, skipping: '{text_to_dub.strip()}' != '{last_text.strip()}'")
+                    last_text = text_to_dub
+                    continue
+                common.log(f"Realtime dubbing enabled: Found realtime subtitle {text_to_dub} for character {char}, playing {similarities[0][1]}")
+                realtime_play(text_to_dub, char)
+                update_played(text_to_dub)
+                return True
+                
     common.log(f"No subtitle found for text, skipping")
     return False
             
@@ -156,6 +192,8 @@ def daemon_wrapper():
         
         
 
-def run_dnp():
+def run_dnp(enable_realtime_dubbing: bool = False):
+    global dnp_config
+    dnp_config["enable_realtime_dubbing"] = enable_realtime_dubbing
     common.log("Starting DNP")
     daemon_wrapper()

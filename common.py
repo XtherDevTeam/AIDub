@@ -128,24 +128,27 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
     gpt_path = pathlib.Path('thirdparty/GPTSoViTs/GPT_weights_v2')
     sovits_path = pathlib.Path('thirdparty/GPTSoViTs/SoVITS_weights_v2')
     model_paths = {}
-    for ckpt, pth in zip(gpt_path.iterdir(), sovits_path.iterdir()):
+    for pth in sovits_path.iterdir():
         try:
-            if ckpt is not None:
-                # trunc from the first char including `(` `)` to first - or _
-                model_name = re.match(r"^(.*?)([-_])", ckpt.stem).group(1)
-                # convert the first char to uppercase
-                model_name = model_name[0:1].upper() + model_name[1:]
-                val = model_paths.get(model_name, ["", ""])
-                val[0] = ckpt
-                model_paths[model_name] = val
-            if pth is not None:
-                # trunc from the first char to first _ or -
-                model_name = re.match(r"^(.*?)([-_])", pth.stem).group(1)
-                # convert the first char to uppercase
-                model_name = model_name[0:1].upper() + model_name[1:]
-                val = model_paths.get(model_name, ["", ""])
-                val[1] = pth
-                model_paths[model_name] = val
+            # trunc from the first char to first _ or -
+            model_name = re.match(r"^(.*?)([-_])", pth.stem).group(1)
+            # convert the first char to uppercase
+            model_name = model_name[0:1].upper() + model_name[1:]
+            val = model_paths.get(model_name, ["", ""])
+            val[1] = pth
+            model_paths[model_name] = val
+        except:
+            pass
+        
+    for ckpt in gpt_path.iterdir():
+        try:
+            # trunc from the first char including `(` `)` to first - or _
+            model_name = re.match(r"^(.*?)([-_])", ckpt.stem).group(1)
+            # convert the first char to uppercase
+            model_name = model_name[0:1].upper() + model_name[1:]
+            val = model_paths.get(model_name, ["", ""])
+            val[0] = ckpt
+            model_paths[model_name] = val 
         except:
             pass
     
