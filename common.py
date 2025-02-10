@@ -97,10 +97,12 @@ def request_retry_wrapper(fetcher: typing.Callable, max_retries: int = 128):
             import random
             log(f"Failed to fetch data due to {e}, retrying...")
             time.sleep(1 / random.randint(1, 5))
+            if _ > 5:
+                raise e
             continue
+            
         
     log(f"Failed to fetch data after {max_retries} retries.")
-    return None
 
 
 def dataset_overview():
@@ -214,7 +216,7 @@ def encode_character_name(char_name: str, lang: str) -> str:
     Returns:
         str: The encoded character name.
     """
-    return f'{char_name}({lang})'
+    return  f'{char_name}({lang})' if lang != 'en' else char_name
 
 
 language_mapping = {

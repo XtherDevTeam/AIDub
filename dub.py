@@ -7,6 +7,9 @@ import json
 import pathlib
 import requests
 
+models_path = config.models_path
+muted_characters = config.muted_characters
+
 def serialize_collection(collection: dict[str, list[str]]):
     return json.dumps(collection)
 
@@ -59,7 +62,7 @@ def generate_prompt_from_voice(char: str, text: str) -> tuple[str, str]:
 def dub_one(text: str, char: str, raw_response: bool = False) -> tuple[str, str] | requests.Response:
     label = common.md5(text)
     dest_path = os.path.join(config.dub_result_dest, f"{label}.aac")
-    if os.path.exists(dest_path):
+    if os.path.exists(dest_path) and char not in ['Gaming', 'Zhongli', 'Baizhu', 'Yun Jin']:
         common.log(f"Dub already exists for {text} for {char}")
         return label, dest_path
     pTexts, pDests = generate_prompt_from_voice(char, text)
@@ -95,11 +98,20 @@ def setup_gpt_sovits_client(ckpt: str, pth: str):
     
 def get_tts_models(char: str,):
     # ckpt, pth
-    return config.models_path.get(char, common.get_default_model_path())
+    print(models_path)
+    return models_path.get(char, common.get_default_model_path())
     
     
     
-def dub_all():
+def dub_all(use_middleware_logic):
+    global models_path
+    global muted_characters
+    if use_middleware_logic:
+        models_path = common.get_available_model_path()
+        models_path = common.get_available_model_path()
+        muted_characters = common.get_muted_chars()
+        muted_characters = common.get_muted_chars()
+        
     make_dirs()
     emotion.load_analysis_file()
     collection = json.loads(pathlib.Path(config.dub_manifest_dest).read_text())
@@ -118,7 +130,5 @@ def dub_all():
                 "text": text,
                 "label": label
             }
-            
-    # with open(config.dub_result_manifest_dest, "w") as f:
-    #     f.write(serialize_collection(dub_result_manifest))
+
     pathlib.Path(config.dub_result_manifest_dest).write_text(serialize_collection(dub_result_manifest))

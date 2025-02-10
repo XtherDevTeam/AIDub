@@ -178,6 +178,7 @@ def name_to_semantic():
 @app.route('/gpt_sovits/train_model_gpt', methods=['POST'])
 def train_model_gpt():
     form = flask.request.json
+    print(config.models_path)
     batch_size = form.get('batch_size', None)
     total_epoch = form.get('total_epoch', 15)
     for char in config.muted_characters:

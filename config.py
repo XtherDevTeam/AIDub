@@ -1,3 +1,5 @@
+import sys
+import pathlib
 muted_characters = [
     # "Kinich",
     # "Kachina",
@@ -27,7 +29,8 @@ ignored_characters = [
 
 
 muted_language = "en"
-enable_multilingual = True # experimental feature, when enabled, the character name will recognize things in () as languages
+# experimental feature, when enabled, the character name will recognize things in () as languages
+enable_multilingual = True
 
 models_path = {
     "Kinich": (
@@ -100,8 +103,9 @@ sources_to_fetch_voice = [
     "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
     "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
     "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob",
+    # using v2 adapter is strongly unrecommended, if huggingface in your area is blocked. Fuck GFW.
     "custom:genshin_huggingface:foobar",
-    # "custom:hsr_huggingface:foobar"
+    "custom:hsr_huggingface:foobar"
 ]
 
 
@@ -109,12 +113,23 @@ sources_to_fetch_voice = [
 # add "quest:" before the quest page which contains the dialogue part
 source_text_to_dub = [
     "https://genshin-impact.fandom.com/wiki/Incandescent_Ode_of_Resurrection",
-    "https://genshin-impact.fandom.com/wiki/All_Fires_Fuel_the_Flame"
+    "https://genshin-impact.fandom.com/wiki/All_Fires_Fuel_the_Flame",
+    "https://honkai-star-rail.fandom.com/wiki/Heroic_Saga_of_Flame-Chase",
+    "quest:https://genshin-impact.fandom.com/wiki/Liyue_Celebrates_and_Eight_Adepts_Face_a_Hidden_Calamity",
+    "quest:https://genshin-impact.fandom.com/wiki/The_Funeral_Parlor_Has_No_Master,_Yujing_Terrace_Calls_the_Troops#Dialogue",
+    "quest:https://genshin-impact.fandom.com/wiki/Qimen_Arts_and_the_Rite_of_Homa,_the_Spirits_are_Calmed_and_Life_Restored",
+    "quest:https://genshin-impact.fandom.com/wiki/Final_Stanza:_The_Sanctification_of_Tao_Dou",
+    "yatta:Enchanted Tales of the Mikawa Festival",
 ]
 
 necessary_replacements = {
     "TravelerTravelerThe player's chosen name for the Traveler": "Traveler",
     "He'sHe'sText for male Traveler/She'sShe'sText for female Traveler": "He",
+    "himhimText for male Traveler/herherText for female Traveler": "him",
+    "(‍himhimText for male Traveler/herherText for female Traveler‍)": "him",
+    "(‍hishisText for male Traveler/herherText for female Traveler‍)": "his",
+    "(TravelerTravelerThe player's chosen name for the Traveler)": "Traveler",
+    "he'she'sText for male Traveler/she'sshe'sText for female Traveler":   "he's",
     "himhimText for male Traveler/herherText for female Traveler": "him",
 }
 
@@ -134,13 +149,13 @@ gpt_model_path = "thirdparty/GPTSoViTs/GPT_weights_v2"
 sovits_model_path = "thirdparty/GPTSoViTs/SoVITS_weights_v2"
 
 # Python 3.10 adaption
-import pathlib
-import sys
 if sys.version_info.major == 3 and sys.version_info.minor <= 10:
     print("Python 3.10 detected, applying adaptions...")
     # patch read_text
     pathlib.Path._real_read_text = pathlib.Path.read_text
-    pathlib.Path.read_text = lambda self, encoding='utf-8', errors=None: self._real_read_text(encoding=encoding, errors=errors)
+    pathlib.Path.read_text = lambda self, encoding='utf-8', errors=None: self._real_read_text(
+        encoding=encoding, errors=errors)
     # patch write_text
     pathlib.Path._real_write_text = pathlib.Path.write_text
-    pathlib.Path.write_text = lambda self, data, encoding='utf-8', errors=None: self._real_write_text(data=data, encoding=encoding, errors=errors)
+    pathlib.Path.write_text = lambda self, data, encoding='utf-8', errors=None: self._real_write_text(
+        data=data, encoding=encoding, errors=errors)

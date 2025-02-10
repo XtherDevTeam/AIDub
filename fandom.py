@@ -208,7 +208,7 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
                 # useless dialogue, skip
                 continue
 
-            char = bLabel.text[0:-1]
+            char = bLabel.text[0:-1] if bLabel.text.endswith(':') else bLabel.text.strip()
 
             if char in target_va:
                 if i.find('span') is None:
@@ -283,7 +283,7 @@ def find_potentially_missing_voice_over_chars(page_url: str, target_va: list[str
                 # useless dialogue, skip
                 continue
 
-            char = bLabel.text[0:-1]
+            char = bLabel.text[0:-1] if bLabel.text.endswith(':') else bLabel.text.strip()
             # print(f"Checking character {char}", i.text.strip())
             if char not in target_va and f"{char}:" in i.text.strip() and char not in config.ignored_characters and '&' not in char:
                 if i.find('span') is None:

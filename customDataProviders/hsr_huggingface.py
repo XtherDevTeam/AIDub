@@ -55,7 +55,7 @@ def get_data(offset, length):
     global src
     cache = pathlib.Path('./hsr_huggingface_cache') / f'cache_{offset}.json'
     cache.parent.mkdir(exist_ok=True, parents=True)
-    if cache.exists() and cache.stat().st_mtime > time.time() - 1 * 60 * 60: # cache for 1 hours
+    if cache.exists(): # cache for 1 hours
         try:
             data = json.loads(cache.read_text())
             if data.get('error') is None:
@@ -72,10 +72,14 @@ def get_data(offset, length):
     return data
 
 
-def get_specific_speaker_language(data, speakers):
+def result_url_and_cache_path(offset, length):
+    cache_path = pathlib.Path('./hsr_huggingface_cache') / f'cache_{offset}.json'
+    return f"{src}&offset={offset}&length={length}", cache_path
+
+def get_specific_speaker_language(data, speakers, url, cache_path):
     """Fetch the data and get the voice collections of the given speakers and language."""
     r = {}
-    for _ in data['rows']:
+    for index, _ in enumerate(data['rows']):
         i = _['row']
         # encode the char name
         if i['speaker'] == '':
@@ -100,7 +104,7 @@ def get_specific_speaker_language(data, speakers):
                 continue
             
             # text, src
-            r[final_choice].append((i['transcription'], i['audio'][0]['src']))
+            r[final_choice].append((i['transcription'], i['audio'][0]['src'], url, cache_path, index))
     return r
 
 
@@ -137,9 +141,9 @@ def traverse_api(speakers, chunk):
         while True:
             try:
                 raw_data = get_data(offset, min(chunk_rpos-offset, 100))
-                    
+                result_url, cache_path = result_url_and_cache_path(offset, min(chunk_rpos-offset, 100))
                 collection = get_specific_speaker_language(
-                    raw_data, speakers)
+                    raw_data, speakers, result_url, cache_path)
                 break
             except Exception as e:
                 # print(raw_data)

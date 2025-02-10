@@ -12,6 +12,7 @@ from config import sources_to_fetch_voice, muted_characters, dataset_manifest_fi
     dub_manifest_dest
 import emotion
 import importlib
+import yatta
 
 
 def do_voice_collection():
@@ -47,9 +48,21 @@ def do_voice_collection():
 def do_subtitle_collection():
     collections: dict[str, list[str]] = {}
     for i in source_text_to_dub:
-        quests = [i[i.index(':')+1:]] if i.startswith('quest:') else fandom.fetch_quest_entries(i)
+        # quests = [i[i.index(':')+1:]] if i.startswith('quest:') else fandom.fetch_quest_entries(i)
+        if i.startswith('quest:'):
+            quests = [i[6:]]
+        elif i.startswith('yatta:'):
+            quests = yatta.fetch_target_quests(i[6:], muted_characters)
+        else:
+            quests = fandom.fetch_quest_entries(i)
+            
         for quest in quests:
-            collection = fandom.fetch_target_subtitles(quest, muted_characters)
+            collection = {}
+            if quest.startswith('yatta:'):
+                collection = yatta.fetch_target_subtitles_quest(quest[6:], muted_characters)
+            else:
+                collection = fandom.fetch_target_subtitles(quest, muted_characters)
+                
             collections = fandom.merge_subtitle_collections([collections, collection])
 
     # with open(dub_manifest_dest, 'w') as f:
@@ -90,6 +103,8 @@ if __name__ == '__main__':
     
     if args.use_middleware_logic:
         models_path = common.get_available_model_path()
+        models_path = common.get_available_model_path()
+        muted_characters = common.get_muted_chars()
         muted_characters = common.get_muted_chars()
         common.log(f'Using middleware logic for models path: {models_path} and muted characters: {muted_characters}')
     
@@ -98,7 +113,7 @@ if __name__ == '__main__':
     elif args.subtitle:
         do_subtitle_collection()
     elif args.dub_all:
-        dub.dub_all()
+        dub.dub_all(args.use_middleware_logic)
     elif args.inference_server:
         dub.run_gpt_sovits_api_server()
     elif args.emotion_classification:

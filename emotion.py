@@ -17,7 +17,7 @@ analysis_file = {}
 def load_bert_classifier():
     global classifier
     if classifier is None:
-        classifier = pipeline("text-classification", model="bhadresh-savani/bert-base-uncased-emotion", device=use_device)
+        classifier = pipeline("text-classification", model="michellejieli/emotion_text_classifier", device=use_device)
 
 
 def classify_emotion(text):
@@ -42,12 +42,13 @@ def initialize_analysis_file():
     for char in dataset:
         common.log(f"Initializing analysis file for {char}")
         file_struct[char] = {
-            # seven emotions, which are sadness, joy, love, anger, fear, surprise
-            "sadness": [],
-            "joy": [],
-            "love": [],
+            # anger	disgust	fear	joy	neutral	sadness	surprise
             "anger": [],
+            "disgust": [],
             "fear": [],
+            "joy": [],
+            "neutral": [],
+            "sadness": [],
             "surprise": []
         }
     pathlib.Path(config.sentiment_analysis_dest).write_text(
