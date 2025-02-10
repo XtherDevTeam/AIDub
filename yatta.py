@@ -12,6 +12,9 @@ def fetch_target_subtitles_quest(page_url: str, target_va: list[str]) -> dict[st
             i = data['data']['storyList'][i_k]
             for j_k in i.get('story', {}):
                 j = i['story'][j_k]
+                if j['taskData'] is None:
+                    continue
+                
                 for k in j.get('taskData', []):
                     for l_k in k.get('items', {}):
                         l = k['items'][l_k]
