@@ -8,7 +8,8 @@ def fetch_target_subtitles_quest(page_url: str, target_va: list[str]) -> dict[st
     data: dict[str, typing.Any] = common.request_retry_wrapper(lambda: requests.get(page_url).json())
     subtitles: dict[str, list[str]] = {}
     if data.get('data'):
-        for i in data['data'].get('storyList', []):
+        for i_k in data['data'].get('storyList', {}):
+            i = data['data']['storyList'][i_k]
             for j_k in i.get('story', {}):
                 j = i['story'][j_k]
                 for k in j.get('taskData', []):
@@ -34,8 +35,8 @@ def fetch_target_quests(page_url: str, target_va: list[str]) -> dict[str, list[s
             i = data['data']['items'][i_k]
             if i['chapterNum'] is None:
                 continue
-            if i['chapterNum'].startswith('page_url'):
-                ids += i['id']
+            if i['chapterNum'].startswith(page_url):
+                ids.append(i['id'])
         
         return [f'yatta:https://gi.yatta.moe/api/v2/EN/quest/{i}' for i in ids]
     else:
