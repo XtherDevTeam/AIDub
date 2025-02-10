@@ -32,6 +32,8 @@ def fetch_target_quests(page_url: str, target_va: list[str]) -> dict[str, list[s
         ids = []
         for i_k in data['data'].get('items', {}):
             i = data['data']['items'][i_k]
+            if i['chapterNum'] is None:
+                continue
             if i['chapterNum'].startswith('page_url'):
                 ids += i['id']
         
