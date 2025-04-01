@@ -34,6 +34,15 @@ def fetch_quest_entries_from_chapter_page(page_url: str) -> list[str]:
                 real_url = urllib.parse.urljoin(page_url, label.get("href"))
                 common.log(f"Found quest entry: {real_url}")
                 collection.append(real_url)
+              
+    # if document.find("div", id="mw-content-text"):
+    #     for ul in document.find("div", id="mw-content-text").find_all("ul"):
+    #         for li in ul.find_all("li"):
+    #             label = li.find("a")
+    #             if label:
+    #                 real_url = urllib.parse.urljoin(page_url, label.get("href"))
+    #                 common.log(f"Found quest entry: {real_url}")
+    #                 collection.append(real_url)
     return collection
 
 def fetch_quest_entries_from_tribe_quest_page(page_url: str) -> list[str]:
@@ -200,17 +209,21 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
         common.log(f"unexpected dialogue part: {page_url}")
         return collection
 
-    for dialoguePart in dialogueParts:
-        ddLabels = dialoguePart.find_all(name='dd')
+    if True:
+        dialoguePart = document
+        ddLabels = dialoguePart.find_all(name='dd', recursive=True) # search all nested too
         for i in ddLabels:
             bLabel = i.find('b')
             if bLabel is None:
                 # useless dialogue, skip
                 continue
 
-            char = bLabel.text[0:-1] if bLabel.text.endswith(':') else bLabel.text.strip()
-
-            if char in target_va:
+            char : str = bLabel.text[0:-1] if bLabel.text.endswith(':') else bLabel.text.strip()
+            import re
+            clear_char_name = re.sub(r'[^\w]', ' ', char)
+            if '?' in char:
+                print(f"Checking character {char} with clear name {clear_char_name}", i.text.strip())
+            if clear_char_name in target_va:
                 if i.find('span') is None:
                     common.log(f"No subtitle found for character: {char} in text: {i.text}, trying fallback method")
                     if i.text.strip().startswith(f'{char}: '):
@@ -230,6 +243,11 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
                 if collection.get(char) is None:
                     collection[char] = []
                 collection[char].append(text)
+                
+    for i in collection:
+        # reduce the same subtitles
+        collection[i] = list(set(collection[i]))
+        
     return collection
 
 

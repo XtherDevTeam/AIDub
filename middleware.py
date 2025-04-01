@@ -49,6 +49,8 @@ app = flask.Flask(__name__)
 def before_request():
     config.models_path = common.get_available_model_path()
     config.muted_characters = common.get_muted_chars()
+    config.models_path = common.get_available_model_path()
+    config.muted_characters = common.get_muted_chars()
     emotion.load_analysis_file()
 
 def makeResult(ok: bool = True, data: typing.Any = None) -> dict:

@@ -1,5 +1,7 @@
 import bettercam
 import pydub
+import miniaudio
+import av
 import re
 import pydub.playback
 import pydub.silence
@@ -19,6 +21,50 @@ import common
 import fuzzywuzzy
 import nltk
 import middleware_api
+
+import sounddevice as sd
+import numpy as np
+
+def play_aac_audio(filepath):
+    # Open the AAC audio file
+    container = av.open(filepath)
+
+    # Find the audio stream (select the first audio stream)
+    audio_stream = next(s for s in container.streams if s.type == 'audio')
+
+    # Configure Audio Resampler for output format (16-bit signed stereo, 44100 Hz)
+    resampler = av.AudioResampler(
+        format='s16',
+        layout='stereo',
+        rate=44100
+    )
+
+    # Open the audio output stream with sounddevice
+    with sd.OutputStream(
+        samplerate=44100,   # Sample rate (Hz)
+        channels=2,         # Stereo
+        dtype='int16',      # 16-bit signed integer
+    ) as stream:
+        
+        # Process each packet in the audio stream
+        for packet in container.demux(audio_stream):
+            # Decode the packet into frames
+            for frame in packet.decode():
+                # Resample the frame to the target format
+                resampled_frame = resampler.resample(frame)
+                if resampled_frame:
+                    # Convert to numpy array and transpose for sounddevice
+                    audio_data = resampled_frame.to_ndarray().T
+                    stream.write(audio_data)
+        
+        # Flush the resampler to process any remaining data
+        while True:
+            resampled_frame = resampler.resample(None)
+            if not resampled_frame:
+                break
+            audio_data = resampled_frame.to_ndarray().T
+            stream.write(audio_data)
+
 
 dnp_config = {
     "enable_realtime_dubbing": False,
@@ -124,6 +170,8 @@ def play(dest: str):
     sound = pydub.AudioSegment.from_file(dest, "aac")
     sound = trim_leading_silence(sound)  # remove leading silence
     pydub.playback.play(sound)  #play sound
+    # play_aac_audio(dest)
+
 
 
 def check_if_played(text):
