@@ -5,10 +5,12 @@ import common
 from transformers import pipeline
 import torch
 import random
+import thirdparty.speechbrainModel
 
 # Load the BERT-Emotions-Classifier
 use_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 classifier = None
+audio_classifier = None
 
 
 analysis_file = {}
@@ -20,11 +22,40 @@ def load_bert_classifier():
         classifier = pipeline("text-classification", model="michellejieli/emotion_text_classifier", device=use_device)
 
 
+def load_audio_classifier():
+    global audio_classifier
+    if audio_classifier is None:
+        audio_classifier = pipeline("audio-classification", model="firdhokk/speech-emotion-recognition-with-openai-whisper-large-v3", device=use_device)
+
+def audio_classifier_mapping(results_audio: list[dict], results_text: list[dict]) -> tuple[str, float]:
+    #  happy angry neutral disgust fearful surprised calm to joy anger neutral disgust fear surprise and neutral.
+    mapping = {
+        "neutral": ["neutral"],
+        "angry": ["anger"],
+        "disgust": ["disgust"],
+        "fearful": ["sadness"],
+        "happy": ["joy"],
+        "surprised": ["surprise"],
+        "calm": ["neutral"],
+        "sad": ['sadness']
+    }
+    
+    if results_audio[0]['label'] == 'fearful':
+        return results_text[0]['label'], results_text[0]['score']
+    else:
+        return mapping[results_audio[0]['label']][0], results_audio[0]['score']
+        
+
 def classify_emotion(text) -> str:
     load_bert_classifier()
     results = classifier(text)
     return results[0]['label']
 
+
+def classify_audio_emotion(audio_path: str) -> str:
+    load_audio_classifier()
+    results = audio_classifier(audio_path)
+    return results[0]['label']
 
 def load_analysis_file():
     if not pathlib.Path(config.sentiment_analysis_dest).exists():
@@ -62,6 +93,7 @@ def save_analysis_file():
 
 
 def do_batch_classification(char):
+    load_audio_classifier()
     load_bert_classifier()
     dataset = json.loads(pathlib.Path(
         config.dataset_manifest_file_dest).read_text())
@@ -71,12 +103,15 @@ def do_batch_classification(char):
     for hash_id in dataset[char]:
         try:
             x = dataset[char][hash_id]
-            text = x["text"]
-            emotion = classifier(text)[0]
-            analysis_file[char][emotion['label']].append({
-                "text": text,
+            text = x
+            audio_emotion = audio_classifier(text["dest"])
+            text_emotion = classifier(text["text"])
+            label, score = audio_classifier_mapping(audio_emotion, text_emotion)
+            
+            analysis_file[char][label].append({
+                "text": text['text'],
                 "hash_id": hash_id,
-                "score": emotion['score'],
+                "score": score,
                 "dest": x["dest"]
             })
         except RuntimeError as e:

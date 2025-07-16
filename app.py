@@ -98,8 +98,6 @@ if __name__ == '__main__':
     parser.add_argument('--missing-voices', action='store_true', help='Find potentially missing voices for the subtitles')
     parser.add_argument('--use-middleware-logic', action='store_true', help='Use middleware logic for initializing muted characters and model paths')
     args = parser.parse_args()
-    global models_path
-    global muted_characters
     
     if args.use_middleware_logic:
         models_path = common.get_available_model_path()
