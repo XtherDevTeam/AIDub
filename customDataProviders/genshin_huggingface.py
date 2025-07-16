@@ -65,7 +65,7 @@ def get_data(offset, length):
             if data.get('error') is None:
                 return data
         except:
-            pass
+            raise ValueError('Invalid cache file')
     
     url = f"{src}&offset={offset}&length={length}"
     response = requests.get(url, stream=False)
@@ -143,6 +143,10 @@ def traverse_api(speakers, chunk):
                 url, cache_path = result_url_and_cache_path(offset, length)
                 collection = get_specific_speaker_language(
                     raw_data, speakers, url, cache_path )
+                break
+            except ValueError as e:
+                # skip
+                collection = []
                 break
             except Exception as e:
                 # print(raw_data)

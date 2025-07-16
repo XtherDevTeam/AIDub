@@ -26,7 +26,7 @@ def fetch_quest_entries_from_chapter_page(page_url: str) -> list[str]:
     document = bs4.BeautifulSoup(req.text, "html.parser")
     # find all <li> tags with ::marker
     # ol : list[bs4.element.Tag]
-    li : bs4.element.Tag
+    li: bs4.element.Tag
     for ol in document.find_all("ol"):
         for li in ol.find_all("li"):
             label = li.find("a")
@@ -34,7 +34,7 @@ def fetch_quest_entries_from_chapter_page(page_url: str) -> list[str]:
                 real_url = urllib.parse.urljoin(page_url, label.get("href"))
                 common.log(f"Found quest entry: {real_url}")
                 collection.append(real_url)
-              
+
     # if document.find("div", id="mw-content-text"):
     #     for ul in document.find("div", id="mw-content-text").find_all("ul"):
     #         for li in ul.find_all("li"):
@@ -44,6 +44,35 @@ def fetch_quest_entries_from_chapter_page(page_url: str) -> list[str]:
     #                 common.log(f"Found quest entry: {real_url}")
     #                 collection.append(real_url)
     return collection
+
+
+def fetch_quest_entries_from_lore_page(page_url: str) -> list[str]:
+    url = page_url
+    common.log(f"Fetching quest entries from lore page: {url}")
+    collection = []
+
+    req = common.request_retry_wrapper(lambda: requests.get(page_url))
+    req.encoding = "utf-8"
+    document = bs4.BeautifulSoup(req.text, "html.parser")
+    # find all <li> tags with ::marker
+    # ul : list[bs4.element.Tag]
+    li: bs4.element.Tag
+    for ol in document.find_all("ul"):
+        for li in ol.find_all("li"):
+            if li.text.strip().startswith("Act"):
+                label = li.find("a")
+                if label:
+                    real_url = urllib.parse.urljoin(
+                        page_url, label.get("href"))
+                    common.log(f"Found act entry: {real_url}")
+                    collection.extend(
+                        fetch_quest_entries_from_chapter_page(real_url))
+
+    # remove duplicates
+    collection = [item[0:item.rfind('#') + 1 if '#' in item else len(item)] for item in collection]
+    collection = list(set(collection))
+    return collection
+
 
 def fetch_quest_entries_from_tribe_quest_page(page_url: str) -> list[str]:
     """
@@ -57,13 +86,13 @@ def fetch_quest_entries_from_tribe_quest_page(page_url: str) -> list[str]:
     """
     collection = []
     req = common.request_retry_wrapper(lambda: requests.get(page_url))
-    
+
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     # find all <ul> tags
-    li : bs4.element.Tag
+    li: bs4.element.Tag
     # start from div class="mw-parser-output"
-    div = document.find('div', {'class':'mw-parser-output'})
+    div = document.find('div', {'class': 'mw-parser-output'})
     if div is None:
         common.log(f"unexpected fandom page: {page_url}")
         return collection
@@ -78,6 +107,7 @@ def fetch_quest_entries_from_tribe_quest_page(page_url: str) -> list[str]:
     common.log(collection)
     return collection
 
+
 def fetch_quest_entries(input: str):
     common.log(f"Fetching quest entries from {input}")
     if input.startswith('tribe:'):
@@ -85,6 +115,11 @@ def fetch_quest_entries(input: str):
         url = input[6:]
         common.log(f"Fetching quest entries from tribe quest page: {url}")
         return fetch_quest_entries_from_tribe_quest_page(url)
+    elif input.startswith('lore:'):
+        # lore page, get url after :
+        url = input[5:]
+        common.log(f"Fetching quest entries from lore page: {url}")
+        return fetch_quest_entries_from_lore_page(url)
     else:
         # chapter, get url
         return fetch_quest_entries_from_chapter_page(input)
@@ -103,8 +138,9 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
 
     collection = {}
 
-    req: requests.Response = common.request_retry_wrapper(lambda: requests.get(page_url))
-    
+    req: requests.Response = common.request_retry_wrapper(
+        lambda: requests.get(page_url))
+
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     dialogueParts = document.find_all('div', {'class': 'dialogue'})
@@ -126,8 +162,9 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
             char = bLabel.text[0:-1]
 
             if char in target_va:
-                if i.find('span') is None:
-                    common.log(f"No vocal file found for character: {char} in text: {i.text}")
+                if i.find('span') is None or i.find('span').find('a') is None:
+                    common.log(
+                        f"No vocal file found for character: {char} in text: {i.text}")
                     continue
                 src = i.find('span').find('a').attrs['href']
                 common.log(f"Found character {char} vocal file: {src}")
@@ -135,29 +172,32 @@ def fetch_target_vo_from_quest_page(page_url: str, target_va: list[str]) -> dict
                 text = i.get_text()
                 text = text[text.find(f'{char}: ') + len(f'{char}: '):]
                 for i in config.necessary_replacements:
-                    common.log(f"Replacing {i} with {config.necessary_replacements[i]} in text: {text}")
+                    common.log(
+                        f"Replacing {i} with {config.necessary_replacements[i]} in text: {text}")
                     text = text.replace(i, config.necessary_replacements[i])
 
                 if collection.get(char) is None:
                     collection[char] = []
                 collection[char].append((text, src))
-                
+
         # workaround for hsr wiki
         # find all span with Play
         playableVoiceLines = dialoguePart.find_all("span", {"title": "Play"})
         for i in playableVoiceLines:
-            i.parent #dd label
+            i.parent  # dd label
             char = i.parent.find('b').text[0:-1]
             text = i.parent.get_text()
             text = text[text.find(f'{char}: ') + len(f'{char}: '):]
-            
+
             for i in config.necessary_replacements:
-                common.log(f"Replacing {i} with {config.necessary_replacements[i]} in text: {text}")
+                common.log(
+                    f"Replacing {i} with {config.necessary_replacements[i]} in text: {text}")
                 text = text.replace(i, config.necessary_replacements[i])
-                
+
             aLabel = i.find('a')
             if aLabel is None:
-                common.log(f"No vocal file found for character: {char} in text: {i.text}")
+                common.log(
+                    f"No vocal file found for character: {char} in text: {i.text}")
                 continue
             src = aLabel.attrs['href']
             if char in target_va:
@@ -204,28 +244,33 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     dialogueParts = document.find_all('div', {'class': 'dialogue'})
-    common.log(f"Found {len(dialogueParts)} dialogue parts for target VA {target_va} in {page_url}")
+    common.log(
+        f"Found {len(dialogueParts)} dialogue parts for target VA {target_va} in {page_url}")
     if dialogueParts is None:
         common.log(f"unexpected dialogue part: {page_url}")
         return collection
 
     if True:
         dialoguePart = document
-        ddLabels = dialoguePart.find_all(name='dd', recursive=True) # search all nested too
+        ddLabels = dialoguePart.find_all(
+            name='dd', recursive=True)  # search all nested too
         for i in ddLabels:
             bLabel = i.find('b')
             if bLabel is None:
                 # useless dialogue, skip
                 continue
 
-            char : str = bLabel.text[0:-1] if bLabel.text.endswith(':') else bLabel.text.strip()
+            char: str = bLabel.text[0:-
+                                    1] if bLabel.text.endswith(':') else bLabel.text.strip()
             import re
             clear_char_name = re.sub(r'[^\w]', ' ', char)
             if '?' in char:
-                print(f"Checking character {char} with clear name {clear_char_name}", i.text.strip())
+                print(
+                    f"Checking character {char} with clear name {clear_char_name}", i.text.strip())
             if clear_char_name in target_va:
                 if i.find('span') is None:
-                    common.log(f"No subtitle found for character: {char} in text: {i.text}, trying fallback method")
+                    common.log(
+                        f"No subtitle found for character: {char} in text: {i.text}, trying fallback method")
                     if i.text.strip().startswith(f'{char}: '):
                         text = i.text.strip()[len(f'{char}: '):]
                         common.log(f"Found character {char} subtitle: {text}")
@@ -233,7 +278,8 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
                             collection[char] = []
                         collection[char].append(text)
                     else:
-                        common.log(f"No subtitle found for character: {char} in text: {i.text}")
+                        common.log(
+                            f"No subtitle found for character: {char} in text: {i.text}")
                     continue
 
                 # get text after `char:`
@@ -243,11 +289,11 @@ def fetch_target_subtitles(page_url: str, target_va: list[str]) -> dict[str, lis
                 if collection.get(char) is None:
                     collection[char] = []
                 collection[char].append(text)
-                
+
     for i in collection:
         # reduce the same subtitles
         collection[i] = list(set(collection[i]))
-        
+
     return collection
 
 
@@ -272,23 +318,24 @@ def merge_subtitle_collections(collections: list[dict[str, list[str]]]):
 
 def find_potentially_missing_voice_over_chars(page_url: str, target_va: list[str]) -> list[str]:
     """
-    
+
 
     Params:
     page_url (str): URL of the chapter page.
 
     Returns:
-    
+
     """
     import threading
     result = []
     threads = []
 
-    req = common.request_retry_wrapper(lambda: requests.get(page_url))
+    req = common.request_retry_wrapper(
+        lambda: requests.get(page_url), max_retries=2)
     req.encoding = "utf-8"
     document = bs4.BeautifulSoup(req.text, "html.parser")
     dialogueParts = document.find_all('div', {'class': 'dialogue'})
-    
+
     if dialogueParts is None:
         common.log(f"unexpected dialogue part: {page_url}")
         return []
@@ -301,17 +348,20 @@ def find_potentially_missing_voice_over_chars(page_url: str, target_va: list[str
                 # useless dialogue, skip
                 continue
 
-            char = bLabel.text[0:-1] if bLabel.text.endswith(':') else bLabel.text.strip()
+            char = bLabel.text[0:-
+                               1] if bLabel.text.endswith(':') else bLabel.text.strip()
             # print(f"Checking character {char}", i.text.strip())
             if char not in target_va and f"{char}:" in i.text.strip() and char not in config.ignored_characters and '&' not in char:
                 if i.find('span') is None:
-                    common.log(f"Possible missing character {char} voiceline: {i.text}")
+                    common.log(
+                        f"Possible missing character {char} voiceline: {i.text}")
                     result.append(char)
                 else:
                     # check if voice is usable
                     x = i.find('span')
                     if x.find('a') is None:
-                        common.log(f"Possible missing character {char} voiceline: {i.text}")
+                        common.log(
+                            f"Possible missing character {char} voiceline: {i.text}")
                         result.append(char)
                     else:
                         def func():
@@ -319,11 +369,13 @@ def find_potentially_missing_voice_over_chars(page_url: str, target_va: list[str
                                 src = x.find('a').attrs['href']
                                 audio = av.open(src)
                                 if audio.duration < 1:
-                                    common.log(f"Possible missing character {char} voiceline: {i.text}")
+                                    common.log(
+                                        f"Possible missing character {char} voiceline: {i.text}")
                                 audio.close()
                                 result.append(char)
                             except:
-                                common.log(f"Failed to load {src} for character {char}")
+                                common.log(
+                                    f"Failed to load {src} for character {char}")
                                 result.append(char)
                         threads.append(threading.Thread(target=func))
 

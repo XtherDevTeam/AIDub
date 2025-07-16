@@ -35,7 +35,7 @@ replace_dict_en = {
 }
 
 
-dataset: datasets.Dataset = common.request_retry_wrapper(lambda: datasets.load_dataset("simon3000/genshin-voice", split="train", streaming=True))
+dataset: datasets.Dataset = common.request_retry_wrapper(lambda: datasets.load_dataset("simon3000/genshin-voice", split="train", streaming=True, cache_dir="M:/datasets/genshin-voice"))
 
 
 
@@ -44,6 +44,7 @@ def fetch_vo_urls(url: str, target_va: list[str]) -> dict[str, tuple[str, str]]:
     Fetches the urls of the voices of the given target_va from the given url.
     Returns a dictionary with the voice names as keys and a tuple of the voice url and the voice audio format as values.
     """
+    print(target_va)
     data = dataset.filter(lambda voice: common.encode_character_name(voice['speaker'], language_mapping[voice['language'] if voice['language'] != "" else 'English(US)']) in target_va or
                         (voice['speaker'] in target_va and voice['language'] == 'English(US)'))
     
@@ -55,7 +56,7 @@ def fetch_vo_urls(url: str, target_va: list[str]) -> dict[str, tuple[str, str]]:
         if result.get(name, None) is None: 
             result[name] = []
         if len(result[name]) > 300:
-            continue
+            break
         if i['language'] == 'Chinese':
             for k, v in replace_dict_cn.items():
                 i['transcription'] = i['transcription'].replace(k, v)
@@ -67,7 +68,7 @@ def fetch_vo_urls(url: str, target_va: list[str]) -> dict[str, tuple[str, str]]:
             continue
         
         import pathlib
-        pth = pathlib.Path('./genshin_huggingface_cache') / f"cache_{common.md5(i['audio']['path'])}.mp3"
+        pth = pathlib.Path('./genshin_huggingface_cache_v2') / f"cache_{common.md5(i['audio']['path'])}.mp3"
         pth.parent.mkdir(exist_ok=True, parents=True)
         sf.write(str(pth), i['audio']['array'], i['audio']['sampling_rate'],format='mp3')
         

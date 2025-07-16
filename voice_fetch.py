@@ -50,8 +50,8 @@ def dispatch_download_task_with_fallback(char: str, text: str, furl: str, fallba
         
         import time
         pth = pathlib.Path(cache_path)
-        
-        if pth.exists() and pth.stat().st_mtime > time.time() - 3600:
+        print(pth, pth.stat().st_mtime, time.time(), pth.stat().st_mtime > time.time() - 86400)
+        if pth.exists() and pth.stat().st_mtime > time.time() - 86400: # check whether the files modified today
             # use cache to refresh url
             try:
                 content = pth.read_text()
@@ -60,6 +60,7 @@ def dispatch_download_task_with_fallback(char: str, text: str, furl: str, fallba
                 assert url != ''
             except:
                 # otherwise, use fallback url
+                print(f"Failed to load cache for {char}, using fallback url: {fallback_url}")
                 content = common.request_retry_wrapper(lambda: requests.get(fallback_url)).content
                 content = content.decode('utf-8')
                 pth.write_text(content)
@@ -108,8 +109,9 @@ def fetch_collection(collection: dict[str, list[tuple[str, str, str, str]]]):
         os.makedirs(pathlib.Path(config.save_dest_for_downloaded_voice) / char, exist_ok=True)
         # seperate 8 list with same counts of elements
         def split_list(lst, n):
+            common.log(f"{lst}")
             return [lst[i:i+n] for i in range(0, len(lst), n)]
-        x = split_list(collection[char], 8)
+        x = split_list(collection[char], 48)
         
         def dispatcher(lst):
             for voice in lst:
@@ -143,6 +145,17 @@ def serialize_collection(collection: dict[str, list[tuple[str, str, str, str]]])
             result[char][label] = {"text": text, "url": url, "dest": os.path.join(config.save_dest_for_downloaded_voice, char, f"{label}.mp3")}
 
     # persist unicodes
+    # merge with existing data
+    existing_data = {}
+    if pathlib.Path(config.dataset_manifest_file_dest).exists():
+        existing_data = json.loads(pathlib.Path(config.dataset_manifest_file_dest).read_text())
+    for char in list(existing_data.keys()) + list(result.keys()):
+        if char in existing_data:
+            if char in result:
+                result[char] = {**existing_data[char], **result[char]}
+            else:
+                result[char] = existing_data[char]
+
     return json.dumps(result, ensure_ascii=False)
 
 def reduce_collection(collection: dict[str, list[tuple[str, str, str, str]]]) -> dict[str, list[tuple[str, str, str, str]]]:
@@ -163,6 +176,21 @@ def reduce_collection(collection: dict[str, list[tuple[str, str, str, str]]]) ->
             del collection[i]
         
     return collection
+    
+def reduce_collection_by_size(collection: dict[str, list[tuple[str, str, str, str]]], min_size: int = 22210) -> dict[str, list[tuple[str, str, str, str]]]:
+    # for each character in collection, check each audio's size, perserve only those with size > min_size
+    reduced_collection = {}
+    for char in collection:
+        reduced_collection[char] = []
+        for voice in collection[char]:
+            path = os.path.join(config.save_dest_for_downloaded_voice, char, f"{common.md5(voice[0])}.mp3")
+            if os.path.exists(pathlib.Path(path)):
+                size = os.path.getsize(pathlib.Path(path))
+            else:
+                size = 0
+            if size > min_size:
+                reduced_collection[char].append(voice)
+    return reduced_collection
     
 def generate_text_list(colab_project_prefix: pathlib.Path = pathlib.Path(config.save_dest_for_downloaded_voice)) -> list[str]:
     collection = json.loads(pathlib.Path(config.dataset_manifest_file_dest).read_text())

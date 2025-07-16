@@ -85,27 +85,27 @@ models_path = {
 
 # sources to fetch voice
 sources_to_fetch_voice = [
-    "https://genshin-impact.fandom.com/wiki/Black_Stone_Under_a_White_Stone",
-    "https://genshin-impact.fandom.com/wiki/Flowers_Resplendent_on_the_Sun-Scorched_Sojourn",
-    "https://genshin-impact.fandom.com/wiki/Kinich%27s_Deal",
-    "https://genshin-impact.fandom.com/wiki/Lingering_Warmth",
-    "https://genshin-impact.fandom.com/wiki/Homecoming",
-    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
-    "https://genshin-impact.fandom.com/wiki/Lupus_Aureus_Chapter",
-    "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
-    "https://genshin-impact.fandom.com/wiki/Oathkeeper",
-    "https://genshin-impact.fandom.com/wiki/King_Deshret_and_the_Three_Magi",
-    "https://genshin-impact.fandom.com/wiki/Dreams,_Emptiness,_Deception",
-    "https://genshin-impact.fandom.com/wiki/The_Morn_a_Thousand_Roses_Brings",
-    "https://genshin-impact.fandom.com/wiki/Through_Mists_of_Smoke_and_Forests_Dark",
-    "https://genshin-impact.fandom.com/wiki/Oathkeeper",
-    "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
-    "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
-    "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
-    "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob",
+    # "https://genshin-impact.fandom.com/wiki/Black_Stone_Under_a_White_Stone",
+    # "https://genshin-impact.fandom.com/wiki/Flowers_Resplendent_on_the_Sun-Scorched_Sojourn",
+    # "https://genshin-impact.fandom.com/wiki/Kinich%27s_Deal",
+    # "https://genshin-impact.fandom.com/wiki/Lingering_Warmth",
+    # "https://genshin-impact.fandom.com/wiki/Homecoming",
+    # "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
+    # "https://genshin-impact.fandom.com/wiki/Lupus_Aureus_Chapter",
+    # "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
+    # "https://genshin-impact.fandom.com/wiki/Oathkeeper",
+    # "https://genshin-impact.fandom.com/wiki/King_Deshret_and_the_Three_Magi",
+    # "https://genshin-impact.fandom.com/wiki/Dreams,_Emptiness,_Deception",
+    # "https://genshin-impact.fandom.com/wiki/The_Morn_a_Thousand_Roses_Brings",
+    # "https://genshin-impact.fandom.com/wiki/Through_Mists_of_Smoke_and_Forests_Dark",
+    # "https://genshin-impact.fandom.com/wiki/Oathkeeper",
+    # "https://genshin-impact.fandom.com/wiki/Floral_Debt,_Blood_Due",
+    # "https://genshin-impact.fandom.com/wiki/The_Unanswerable_Problems",
+    # "https://genshin-impact.fandom.com/wiki/Sands_of_Solitude",
+    # "https://genshin-impact.fandom.com/wiki/The_Illusions_of_the_Mob",
     # using v2 adapter is strongly unrecommended, if huggingface in your area is blocked. Fuck GFW.
-    "custom:genshin_huggingface:foobar",
-    "custom:hsr_huggingface:foobar"
+    # "custom:genshin_huggingface_v2:foobar",
+    # "custom:hsr_huggingface:foobar"
 ]
 
 
@@ -119,9 +119,9 @@ source_text_to_dub = [
     # "quest:https://genshin-impact.fandom.com/wiki/The_Funeral_Parlor_Has_No_Master,_Yujing_Terrace_Calls_the_Troops#Dialogue",
     # "quest:https://genshin-impact.fandom.com/wiki/Qimen_Arts_and_the_Rite_of_Homa,_the_Spirits_are_Calmed_and_Life_Restored",
     # "quest:https://genshin-impact.fandom.com/wiki/Final_Stanza:_The_Sanctification_of_Tao_Dou",
-    # "yatta:Enchanted Tales of the Mikawa Festival",
-    "https://honkai-star-rail.fandom.com/wiki/Light_Slips_the_Gate,_Shadow_Greets_the_Throne",
-    "https://genshin-impact.fandom.com/wiki/Travelers%27_Tales:_Anthology_Chapter/Story"
+    "https://genshin-impact.fandom.com/wiki/Paralogism",
+    # "https://honkai-star-rail.fandom.com/wiki/Light_Slips_the_Gate,_Shadow_Greets_the_Throne",
+    # "https://genshin-impact.fandom.com/wiki/Travelers%27_Tales:_Anthology_Chapter/Story"
 ]
 
 necessary_replacements = {
@@ -161,3 +161,30 @@ if sys.version_info.major == 3 and sys.version_info.minor <= 10:
     pathlib.Path._real_write_text = pathlib.Path.write_text
     pathlib.Path.write_text = lambda self, data, encoding='utf-8', errors=None: self._real_write_text(
         data=data, encoding=encoding, errors=errors)
+    
+    # hook request
+    import requests
+    import hashlib
+    import time
+    requests._get = requests.get
+    def get(url, **kwargs):
+        print(f"Fetching {url}...")
+        # print traceback
+        # import traceback
+        # traceback.print_stack()
+        if 'fandom.com' in url:
+            cache_path = pathlib.Path('requests_get_cache') / hashlib.md5(url.encode('utf-8')).hexdigest()
+            if cache_path.exists() and time.time() - cache_path.stat().st_mtime < 60 * 60 * 24: # cache for 24 hours
+                print(f"Cache hit for {url}...")
+                with cache_path.open('rb') as f:
+                    response = requests.models.Response()
+                    response._content = f.read()
+                    response.status_code = 200
+                    return response
+            else:
+                response = requests._get(url, **kwargs)
+                with cache_path.open('wb') as f:
+                    f.write(response.content)
+                return response
+        return requests._get(url, **kwargs)
+    requests.get = get

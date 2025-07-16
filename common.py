@@ -172,8 +172,8 @@ def get_available_model_path() -> dict[str, tuple[str, str]]:
 
 
 def get_default_model_path() -> tuple[str, str]:
-    return ("thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt",
-        "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/gsv-v2final-pretrained/s2G2333k.pth")
+    return ("thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/s1v3.ckpt",
+        "thirdparty/GPTSoViTs/GPT_SoVITS/pretrained_models/v2Pro/s2Gv2Pro.pth")
 
 
 def get_muted_chars() -> list[str]:

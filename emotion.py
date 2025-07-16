@@ -20,7 +20,7 @@ def load_bert_classifier():
         classifier = pipeline("text-classification", model="michellejieli/emotion_text_classifier", device=use_device)
 
 
-def classify_emotion(text):
+def classify_emotion(text) -> str:
     load_bert_classifier()
     results = classifier(text)
     return results[0]['label']

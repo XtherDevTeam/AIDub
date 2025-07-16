@@ -86,7 +86,7 @@ def dub_one(text: str, char: str, raw_response: bool = False) -> tuple[str, str]
     
     
 def run_gpt_sovits_api_server():
-    os.system(f"python thirdparty/GPTSoViTs/api_v2.py -a 127.0.0.1 -p 2372 -c templates/tts_infer.yaml")
+    os.system(f"python thirdparty/GPTSoVITs/api_v2.py -a 127.0.0.1 -p 2372 -c templates/tts_infer.yaml")
     
 GPTSoVitsAPI: GPTSoVits.GPTSoVitsAPI = None
     
@@ -99,7 +99,7 @@ def setup_gpt_sovits_client(ckpt: str, pth: str):
 def get_tts_models(char: str,):
     # ckpt, pth
     print(config.models_path)
-    return config.models_path.get(char, common.get_default_model_path())
+    return config.models_path.get(char, common.get_default_model_path()) if char != "Albedo" else common.get_default_model_path()
     
     
     

@@ -27,6 +27,7 @@ The server will be running on `http://localhost:2731`.
 
 import os
 import pathlib
+import traceback
 import flask_cors
 import flask
 import typing
@@ -77,11 +78,14 @@ def do_voice_collection():
                 collections = fandom.merge_voice_collections([collections, collection])
                 
     # download voices
-    voice_fetch.reduce_collection(collections)
+    # voice_fetch.reduce_collection(collections)
     voice_fetch.fetch_collection(collections)
+    collections = voice_fetch.reduce_collection_by_size(collections)
     pathlib.Path(config.dataset_manifest_file_dest).write_text(voice_fetch.serialize_collection(collections))
 
     voice_fetch.generate_text_list()
+    
+
 
 
 @app.route('/download_dataset', methods=['POST'])
@@ -189,6 +193,7 @@ def train_model_gpt():
                 continue
             communication.train_s1(char, "0", batch_size=batch_size, total_epoch=total_epoch)
         except Exception as e:
+            traceback.print_exc()
             return makeResult(ok=False, data=f"Error while training model for {char}: {e}")
     return makeResult(ok=True, data=f"Model for {config.muted_characters} trained successfully.")
 
@@ -207,6 +212,17 @@ def train_model_sovits():
             return makeResult(ok=False, data=f"Error while training model for {char}: {e}")
         
     return makeResult(ok=True, data=f"Model for {config.muted_characters} trained successfully.")
+    
+    
+@app.route('/sentiment', methods=['POST'])
+def sentiment_analysis():
+    form = flask.request.json
+    text = form['text']
+    sentiment = emotion.classify_emotion(text)
+    return makeResult(ok=True, data={
+        "sentiment": sentiment,
+        "text": text,
+    })
     
     
 @app.route('/info', methods=['POST'])
